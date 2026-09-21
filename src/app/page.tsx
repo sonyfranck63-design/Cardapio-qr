@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { QrCode, Smartphone, Zap, Check, ChevronRight, Star } from 'lucide-react'
+import { QrCode, Smartphone, Zap, Check, ChevronRight, Star, Sparkles } from 'lucide-react'
 
 export default function LandingPage() {
   return (
@@ -14,6 +14,10 @@ export default function LandingPage() {
             <span className="font-bold text-lg">CardápioQR</span>
           </div>
           <div className="flex items-center gap-3">
+            <Link href="/demo" className="text-sm font-semibold text-amber-400 hover:text-amber-300 flex items-center gap-1 transition-colors">
+              <Sparkles className="w-4 h-4" />
+              Ver Cardápio Demo
+            </Link>
             <Link href="/auth/login" className="text-sm text-gray-400 hover:text-white transition-colors">
               Entrar
             </Link>
@@ -46,13 +50,14 @@ export default function LandingPage() {
             através de um QR Code gerado automaticamente. Simples assim.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slide-up">
-            <Link href="/auth/register" className="btn-primary text-base px-8 py-3.5">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-slide-up">
+            <Link href="/demo" className="btn-primary text-base px-8 py-3.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg shadow-orange-500/25">
+              <Sparkles className="w-5 h-5 text-amber-200" />
+              Ver Cardápio de Demonstração (Ao Vivo)
+            </Link>
+            <Link href="/auth/register" className="btn-secondary text-base px-6 py-3.5">
               Criar meu cardápio grátis
               <ChevronRight className="w-5 h-5" />
-            </Link>
-            <Link href="/auth/login" className="btn-secondary text-base px-8 py-3.5">
-              Já tenho conta
             </Link>
           </div>
         </div>
