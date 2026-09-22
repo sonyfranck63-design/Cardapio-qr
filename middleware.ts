@@ -5,7 +5,7 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   // Rotas públicas que não precisam verificar autenticação
-  if (!pathname.startsWith('/admin') && !pathname.startsWith('/auth')) {
+  if (!pathname.startsWith('/admin') && !pathname.startsWith('/auth') && !pathname.startsWith('/superadmin')) {
     return NextResponse.next()
   }
 
@@ -46,6 +46,27 @@ export async function middleware(request: NextRequest) {
   } catch (e) {
     // Falha silenciosa em dev se Supabase não responder
     user = null
+  }
+
+  // Protege a rota /superadmin
+  if (pathname.startsWith('/superadmin')) {
+    if (!user) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/auth/login'
+      return NextResponse.redirect(url)
+    }
+
+    const adminEmails = (process.env.SUPERADMIN_EMAILS || 'sonyfranck63@gmail.com')
+      .split(',')
+      .map(e => e.trim().toLowerCase())
+
+    const userEmail = user.email?.toLowerCase() || ''
+    if (!adminEmails.includes(userEmail)) {
+      // Redireciona usuários regulares para seu próprio painel
+      const url = request.nextUrl.clone()
+      url.pathname = '/admin'
+      return NextResponse.redirect(url)
+    }
   }
 
   // Protege todas as rotas /admin

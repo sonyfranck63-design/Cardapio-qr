@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   QrCode, LayoutDashboard, Tag, UtensilsCrossed,
-  Settings, LogOut, Menu, X, ExternalLink, CreditCard
+  Settings, LogOut, Menu, X, ExternalLink, CreditCard, Crown
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Restaurant } from '@/types/database'
@@ -28,7 +28,22 @@ export default function AdminSidebar({ restaurant }: AdminSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false)
   const supabase = createClient()
+
+  useEffect(() => {
+    async function checkAdmin() {
+      const { data: { user } } = await supabase.auth.getUser()
+      const adminEmails = (process.env.NEXT_PUBLIC_SUPERADMIN_EMAILS || 'sonyfranck63@gmail.com')
+        .split(',')
+        .map(e => e.trim().toLowerCase())
+
+      if (user?.email && adminEmails.includes(user.email.toLowerCase())) {
+        setIsSuperAdmin(true)
+      }
+    }
+    checkAdmin()
+  }, [])
 
   async function handleLogout() {
     await supabase.auth.signOut()
@@ -85,6 +100,19 @@ export default function AdminSidebar({ restaurant }: AdminSidebarProps) {
             </Link>
           )
         })}
+
+        {isSuperAdmin && (
+          <div className="pt-2">
+            <Link
+              href="/superadmin"
+              onClick={() => setMobileOpen(false)}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 transition-all duration-200"
+            >
+              <Crown className="w-4 h-4 flex-shrink-0 text-amber-400" />
+              Super Admin
+            </Link>
+          </div>
+        )}
       </nav>
 
       {/* Logout */}
