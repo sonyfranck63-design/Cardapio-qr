@@ -3,12 +3,13 @@
 import { buildWhatsAppUrl } from '@/lib/utils'
 
 interface WhatsAppButtonProps {
-  whatsapp: string
-  message: string
+  whatsapp?: string | null
+  message?: string | null
 }
 
 export default function WhatsAppButton({ whatsapp, message }: WhatsAppButtonProps) {
-  const url = buildWhatsAppUrl(whatsapp, message)
+  if (!whatsapp) return null
+  const url = buildWhatsAppUrl(whatsapp, message || 'Olá! Gostaria de fazer um pedido.')
 
   return (
     <a
