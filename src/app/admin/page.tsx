@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { Tag, UtensilsCrossed, Eye, EyeOff, ExternalLink } from 'lucide-react'
+import { Tag, UtensilsCrossed, Eye, EyeOff, ExternalLink, CreditCard, Sparkles, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
 import QRCodeDisplay from '@/components/admin/QRCodeDisplay'
 import { getMenuUrl } from '@/lib/utils'
@@ -20,7 +20,7 @@ export default async function AdminDashboard() {
     .eq('user_id', user.id)
     .single()
 
-  if (!restaurant) redirect('/auth/register')
+  if (!restaurant) redirect('/auth/login')
 
   const [{ count: categoriesCount }, { count: activeItemsCount }, { count: inactiveItemsCount }] =
     await Promise.all([
@@ -31,15 +31,79 @@ export default async function AdminDashboard() {
 
   const menuUrl = getMenuUrl(restaurant.slug)
 
+  // Dados da assinatura
+  const expiresDate = restaurant.subscription_expires_at ? new Date(restaurant.subscription_expires_at) : new Date()
+  const now = new Date()
+  const diffTime = expiresDate.getTime() - now.getTime()
+  const daysRemaining = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)))
+  const isExpired = diffTime <= 0
+  const isTrial = restaurant.subscription_status === 'trial' && !isExpired
+  const isActive = restaurant.subscription_status === 'active' && !isExpired
+
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Header */}
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold text-white">
-          Olá! 👋
+          Olá, {restaurant.name}! 👋
         </h1>
-        <p className="text-gray-400 mt-1">Aqui está o resumo do seu cardápio.</p>
+        <p className="text-gray-400 mt-1">Aqui está o resumo do seu cardápio e status da sua conta.</p>
       </div>
+
+      {/* Subscription Banner */}
+      {isExpired && (
+        <div className="p-5 rounded-2xl bg-red-500/10 border border-red-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold text-red-300 text-sm">Assinatura Vencida • Cardápio Suspenso</p>
+              <p className="text-xs text-red-200/80 mt-0.5">
+                Seus clientes não conseguem acessar o cardápio pelo QR Code. Renove sua mensalidade para reativar.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/admin/subscription"
+            className="btn-primary bg-red-600 hover:bg-red-700 text-xs px-4 py-2.5 font-semibold shrink-0 text-center"
+          >
+            Pagar Mensalidade (R$ 49,90)
+          </Link>
+        </div>
+      )}
+
+      {isTrial && (
+        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <Sparkles className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold text-amber-300 text-sm">
+                Período de Testes: {daysRemaining} {daysRemaining === 1 ? 'dia restante' : 'dias restantes'}
+              </p>
+              <p className="text-xs text-amber-200/80 mt-0.5">
+                Aproveite para cadastrar seus itens e testar. Garanta a continuidade assinando o plano mensal.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/admin/subscription"
+            className="text-xs font-semibold text-amber-300 hover:text-white bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 px-3.5 py-2 rounded-xl transition-colors shrink-0 text-center"
+          >
+            Gerenciar Assinatura
+          </Link>
+        </div>
+      )}
+
+      {isActive && (
+        <div className="p-3.5 px-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2 text-emerald-400 font-medium">
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+            <span>Assinatura Ativa • Próxima renovação em {expiresDate.toLocaleDateString('pt-BR')}</span>
+          </div>
+          <Link href="/admin/subscription" className="text-gray-400 hover:text-white transition-colors underline">
+            Detalhes
+          </Link>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

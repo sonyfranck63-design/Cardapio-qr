@@ -15,6 +15,10 @@ const mockRestaurant: Restaurant = {
   whatsapp: '5511999998888',
   whatsapp_message: 'Olá! Gostaria de fazer um pedido pelo cardápio digital.',
   created_at: new Date().toISOString(),
+  subscription_status: 'active',
+  subscription_plan: 'mensal',
+  subscription_expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+  mercadopago_payment_id: null,
 }
 
 const mockCategories: CategoryWithItems[] = [

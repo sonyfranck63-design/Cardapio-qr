@@ -13,6 +13,10 @@ CREATE TABLE IF NOT EXISTS public.restaurants (
   logo_url        TEXT,
   whatsapp        TEXT,
   whatsapp_message TEXT DEFAULT 'Olá! Gostaria de fazer um pedido.',
+  subscription_status TEXT DEFAULT 'trial' NOT NULL,
+  subscription_plan TEXT DEFAULT 'mensal' NOT NULL,
+  subscription_expires_at TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '7 days') NOT NULL,
+  mercadopago_payment_id TEXT,
   created_at      TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
@@ -20,6 +24,8 @@ CREATE TABLE IF NOT EXISTS public.restaurants (
 CREATE INDEX IF NOT EXISTS restaurants_slug_idx ON public.restaurants(slug);
 -- Index para busca por user_id (usado no admin)
 CREATE INDEX IF NOT EXISTS restaurants_user_id_idx ON public.restaurants(user_id);
+-- Index para status de assinatura
+CREATE INDEX IF NOT EXISTS restaurants_subscription_status_idx ON public.restaurants(subscription_status);
 
 -- 2. Tabela de categorias
 -- ============================================================
@@ -198,3 +204,49 @@ CREATE POLICY "storage_owner_delete"
     bucket_id = 'restaurant-assets' AND
     auth.uid()::text = (storage.foldername(name))[1]
   );
+
+-- ============================================================
+-- Trigger: Criação Automática do Restaurante no Cadastro do Usuário
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+DECLARE
+  restaurant_name TEXT;
+  restaurant_slug TEXT;
+  base_slug TEXT;
+BEGIN
+  restaurant_name := COALESCE(new.raw_user_meta_data->>'restaurant_name', 'Meu Restaurante');
+  base_slug := lower(regexp_replace(restaurant_name, '[^a-zA-Z0-9]+', '-', 'g'));
+  base_slug := trim(both '-' from base_slug);
+  IF base_slug = '' THEN
+    base_slug := 'restaurante';
+  END IF;
+  
+  restaurant_slug := base_slug || '-' || substr(md5(random()::text), 1, 6);
+
+  INSERT INTO public.restaurants (
+    user_id,
+    name,
+    slug,
+    subscription_status,
+    subscription_plan,
+    subscription_expires_at
+  )
+  VALUES (
+    new.id,
+    restaurant_name,
+    restaurant_slug,
+    'trial',
+    'mensal',
+    NOW() + INTERVAL '7 days'
+  );
+
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+

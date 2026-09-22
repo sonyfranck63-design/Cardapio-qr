@@ -22,7 +22,7 @@ export default function LandingPage() {
               Entrar
             </Link>
             <Link href="/auth/register" className="btn-primary text-sm px-4 py-2">
-              Criar grátis
+              Testar 7 dias grátis
             </Link>
           </div>
         </div>
@@ -36,7 +36,7 @@ export default function LandingPage() {
         <div className="max-w-4xl mx-auto text-center relative">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-brand-500/30 bg-brand-500/10 text-brand-400 text-sm font-medium mb-8 animate-fade-in">
             <Zap className="w-4 h-4" />
-            Cardápio pronto em menos de 5 minutos
+            Cardápio pronto em menos de 5 minutos • 7 dias de teste grátis
           </div>
 
           <h1 className="text-4xl sm:text-6xl font-bold leading-tight mb-6 animate-slide-up">
@@ -56,7 +56,7 @@ export default function LandingPage() {
               Ver Cardápio de Demonstração (Ao Vivo)
             </Link>
             <Link href="/auth/register" className="btn-secondary text-base px-6 py-3.5">
-              Criar meu cardápio grátis
+              Começar teste grátis de 7 dias
               <ChevronRight className="w-5 h-5" />
             </Link>
           </div>
@@ -159,10 +159,20 @@ export default function LandingPage() {
       {/* Pricing */}
       <section className="py-20 px-4 sm:px-6">
         <div className="max-w-md mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-4">Simples e direto</h2>
+          <h2 className="text-3xl font-bold mb-2">Preço acessível para o seu negócio</h2>
+          <p className="text-gray-400 text-sm mb-6">Comece a testar hoje mesmo sem pagar nada adiantado.</p>
           <div className="glass-card p-8 border-brand-500/30">
-            <div className="text-5xl font-bold text-gradient mb-2">Grátis</div>
-            <p className="text-gray-400 mb-8">Para sempre. Sem cartão de crédito.</p>
+            <div className="inline-block px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-semibold uppercase tracking-wider mb-4">
+              Plano Mensal Pro
+            </div>
+            <div className="flex items-baseline justify-center gap-1 mb-2">
+              <span className="text-2xl font-bold text-gray-300">R$</span>
+              <span className="text-5xl font-extrabold text-white">49,90</span>
+              <span className="text-gray-400 text-sm">/mês</span>
+            </div>
+            <p className="text-emerald-400 font-medium text-sm mb-8">
+              ✨ 7 dias de teste grátis • Cancele quando quiser
+            </p>
             <ul className="space-y-3 text-left mb-8">
               {freePlanFeatures.map((f, i) => (
                 <li key={i} className="flex items-center gap-3 text-sm text-gray-300">
@@ -172,9 +182,12 @@ export default function LandingPage() {
               ))}
             </ul>
             <Link href="/auth/register" className="btn-primary w-full justify-center text-base py-3.5">
-              Começar agora
+              Começar 7 dias grátis
               <ChevronRight className="w-5 h-5" />
             </Link>
+            <p className="text-xs text-gray-500 mt-4">
+              Pagamento via PIX ou Cartão pelo Mercado Pago após o período de testes.
+            </p>
           </div>
         </div>
       </section>

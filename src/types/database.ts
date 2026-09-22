@@ -18,6 +18,10 @@ export interface Database {
           logo_url: string | null
           whatsapp: string | null
           whatsapp_message: string | null
+          subscription_status: 'trial' | 'active' | 'past_due' | 'canceled'
+          subscription_plan: string
+          subscription_expires_at: string
+          mercadopago_payment_id: string | null
           created_at: string
         }
         Insert: {
@@ -28,6 +32,10 @@ export interface Database {
           logo_url?: string | null
           whatsapp?: string | null
           whatsapp_message?: string | null
+          subscription_status?: 'trial' | 'active' | 'past_due' | 'canceled'
+          subscription_plan?: string
+          subscription_expires_at?: string
+          mercadopago_payment_id?: string | null
           created_at?: string
         }
         Update: {
@@ -38,6 +46,10 @@ export interface Database {
           logo_url?: string | null
           whatsapp?: string | null
           whatsapp_message?: string | null
+          subscription_status?: 'trial' | 'active' | 'past_due' | 'canceled'
+          subscription_plan?: string
+          subscription_expires_at?: string
+          mercadopago_payment_id?: string | null
           created_at?: string
         }
         Relationships: {

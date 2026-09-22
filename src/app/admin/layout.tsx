@@ -15,15 +15,48 @@ export default async function AdminLayout({
   }
 
   // Busca dados do restaurante
-  const { data: restaurant } = await supabase
+  let { data: restaurant } = await supabase
     .from('restaurants')
     .select('*')
     .eq('user_id', user.id)
-    .single()
+    .maybeSingle()
 
   if (!restaurant) {
-    // Se não tem restaurante, redireciona para criar (não deveria acontecer se registrou corretamente)
-    redirect('/auth/register')
+    const rawName = user.user_metadata?.restaurant_name || 'Meu Restaurante'
+    const cleanSlug = rawName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'restaurante'
+    const finalSlug = `${cleanSlug}-${user.id.slice(0, 6)}`
+    
+    const expiresAt = new Date()
+    expiresAt.setDate(expiresAt.getDate() + 7)
+
+    const { data: createdRest } = await supabase
+      .from('restaurants')
+      .insert({
+        user_id: user.id,
+        name: rawName,
+        slug: finalSlug,
+        subscription_status: 'trial',
+        subscription_plan: 'mensal',
+        subscription_expires_at: expiresAt.toISOString(),
+      })
+      .select('*')
+      .maybeSingle()
+
+    if (createdRest) {
+      restaurant = createdRest
+    } else {
+      // Tenta buscar novamente caso um trigger tenha acabado de criar
+      const { data: retried } = await supabase
+        .from('restaurants')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle()
+      restaurant = retried
+    }
+  }
+
+  if (!restaurant) {
+    redirect('/auth/login')
   }
 
   return (

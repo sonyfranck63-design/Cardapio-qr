@@ -7,7 +7,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import toast from 'react-hot-toast'
-import { QrCode, Eye, EyeOff, Loader2, ArrowLeft } from 'lucide-react'
+import { QrCode, Eye, EyeOff, Loader2, ArrowLeft, Mail, CheckCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { slugify } from '@/lib/utils'
 
@@ -28,6 +28,8 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
   const supabase = createClient()
 
+  const [emailSent, setEmailSent] = useState<string | null>(null)
+
   const {
     register,
     handleSubmit,
@@ -40,10 +42,15 @@ export default function RegisterPage() {
   const restaurantNameValue = watch('restaurantName', '')
 
   async function onSubmit(data: RegisterForm) {
-    // 1. Criar usuário no Supabase Auth
+    // 1. Criar usuário no Supabase Auth com metadados do restaurante
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
+      options: {
+        data: {
+          restaurant_name: data.restaurantName,
+        },
+      },
     })
 
     if (authError || !authData.user) {
@@ -51,10 +58,16 @@ export default function RegisterPage() {
       return
     }
 
-    // 2. Gerar slug único para o restaurante
+    // Se não há sessão ativa, significa que o Supabase exige confirmação por e-mail
+    if (!authData.session) {
+      setEmailSent(data.email)
+      toast.success('Conta criada! Verifique seu e-mail para ativar.')
+      return
+    }
+
+    // Se temos sessão ativa, tenta inserir ou garantir que o restaurante existe
     let slug = slugify(data.restaurantName)
 
-    // Verificar se slug já existe
     const { data: existing } = await supabase
       .from('restaurants')
       .select('*')
@@ -65,19 +78,33 @@ export default function RegisterPage() {
       slug = `${slug}-${Date.now().toString(36)}`
     }
 
-    // 3. Criar registro do restaurante
-    const { error: restaurantError } = await supabase.from('restaurants').insert({
-      user_id: authData.user.id,
-      name: data.restaurantName,
-      slug,
-    })
+    // Verifica se já foi criado pelo trigger do banco
+    const { data: myRest } = await supabase
+      .from('restaurants')
+      .select('id')
+      .eq('user_id', authData.user.id)
+      .maybeSingle()
 
-    if (restaurantError) {
-      toast.error('Erro ao criar restaurante. Tente novamente.')
-      return
+    if (!myRest) {
+      const expiresAt = new Date()
+      expiresAt.setDate(expiresAt.getDate() + 7)
+
+      const { error: restaurantError } = await supabase.from('restaurants').insert({
+        user_id: authData.user.id,
+        name: data.restaurantName,
+        slug,
+        subscription_status: 'trial',
+        subscription_plan: 'mensal',
+        subscription_expires_at: expiresAt.toISOString(),
+      })
+
+      if (restaurantError) {
+        console.error('Erro ao criar restaurante:', restaurantError)
+        // Mesmo com erro de insert manual, se o trigger criar no banco, o usuário não deve ficar travado
+      }
     }
 
-    toast.success('Conta criada! Bem-vindo ao CardápioQR 🎉')
+    toast.success('Conta criada com 7 dias grátis! Bem-vindo 🎉')
     router.push('/admin')
     router.refresh()
   }
@@ -104,103 +131,141 @@ export default function RegisterPage() {
         </div>
 
         <div className="glass-card p-8">
-          <h1 className="text-xl font-bold text-white mb-6">Criar conta grátis</h1>
-
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-            <div>
-              <label htmlFor="restaurantName" className="input-label">Nome do restaurante / bar</label>
-              <input
-                id="restaurantName"
-                type="text"
-                placeholder="Ex: Bar do João"
-                className="input-field"
-                {...register('restaurantName')}
-              />
-              {errors.restaurantName ? (
-                <p className="mt-1.5 text-xs text-red-400">{errors.restaurantName.message}</p>
-              ) : restaurantNameValue.length >= 2 ? (
-                <p className="mt-1.5 text-xs text-gray-500">
-                  Seu link: <span className="text-brand-400">cardapio.com/{slugify(restaurantNameValue)}</span>
-                </p>
-              ) : null}
-            </div>
-
-            <div>
-              <label htmlFor="email" className="input-label">E-mail</label>
-              <input
-                id="email"
-                type="email"
-                placeholder="seu@email.com"
-                className="input-field"
-                autoComplete="email"
-                {...register('email')}
-              />
-              {errors.email && (
-                <p className="mt-1.5 text-xs text-red-400">{errors.email.message}</p>
-              )}
-            </div>
-
-            <div>
-              <label htmlFor="password" className="input-label">Senha</label>
-              <div className="relative">
-                <input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Mínimo 6 caracteres"
-                  className="input-field pr-11"
-                  autoComplete="new-password"
-                  {...register('password')}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
+          {emailSent ? (
+            <div className="text-center py-4 space-y-4">
+              <div className="w-16 h-16 bg-brand-500/20 text-brand-400 rounded-full flex items-center justify-center mx-auto border border-brand-500/30">
+                <Mail className="w-8 h-8" />
               </div>
-              {errors.password && (
-                <p className="mt-1.5 text-xs text-red-400">{errors.password.message}</p>
-              )}
+              <h2 className="text-2xl font-bold text-white">Quase lá! Confirme seu e-mail</h2>
+              <p className="text-gray-300 text-sm leading-relaxed">
+                Enviamos um link de confirmação para <strong className="text-white">{emailSent}</strong>.
+              </p>
+              <div className="p-4 bg-white/5 border border-white/10 rounded-xl text-left text-xs text-gray-400 space-y-2">
+                <div className="flex items-start gap-2">
+                  <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                  <span>Abra a caixa de entrada do seu e-mail (verifique também a pasta de Spam/Lixo).</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                  <span>Clique no link para ativar seu cardápio com 7 dias grátis.</span>
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <Link
+                  href="/auth/login"
+                  className="btn-primary w-full justify-center py-3 text-base"
+                >
+                  Ir para a tela de Login
+                </Link>
+              </div>
             </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between mb-6">
+                <h1 className="text-xl font-bold text-white">Criar conta e começar</h1>
+                <span className="text-xs bg-brand-500/20 text-brand-400 border border-brand-500/30 px-2.5 py-1 rounded-full font-medium">
+                  7 dias grátis
+                </span>
+              </div>
 
-            <div>
-              <label htmlFor="confirmPassword" className="input-label">Confirmar senha</label>
-              <input
-                id="confirmPassword"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="Repita a senha"
-                className="input-field"
-                autoComplete="new-password"
-                {...register('confirmPassword')}
-              />
-              {errors.confirmPassword && (
-                <p className="mt-1.5 text-xs text-red-400">{errors.confirmPassword.message}</p>
-              )}
-            </div>
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+                <div>
+                  <label htmlFor="restaurantName" className="input-label">Nome do restaurante / bar</label>
+                  <input
+                    id="restaurantName"
+                    type="text"
+                    placeholder="Ex: Bar do João"
+                    className="input-field"
+                    {...register('restaurantName')}
+                  />
+                  {errors.restaurantName ? (
+                    <p className="mt-1.5 text-xs text-red-400">{errors.restaurantName.message}</p>
+                  ) : restaurantNameValue.length >= 2 ? (
+                    <p className="mt-1.5 text-xs text-gray-500">
+                      Seu link: <span className="text-brand-400">cardapio.com/{slugify(restaurantNameValue)}</span>
+                    </p>
+                  ) : null}
+                </div>
 
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="btn-primary w-full justify-center py-3 text-base mt-2"
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Criando conta...
-                </>
-              ) : (
-                'Criar conta grátis'
-              )}
-            </button>
-          </form>
+                <div>
+                  <label htmlFor="email" className="input-label">E-mail</label>
+                  <input
+                    id="email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    className="input-field"
+                    autoComplete="email"
+                    {...register('email')}
+                  />
+                  {errors.email && (
+                    <p className="mt-1.5 text-xs text-red-400">{errors.email.message}</p>
+                  )}
+                </div>
 
-          <p className="text-center text-sm text-gray-500 mt-6">
-            Já tem conta?{' '}
-            <Link href="/auth/login" className="text-brand-400 hover:text-brand-300 font-medium transition-colors">
-              Entrar
-            </Link>
-          </p>
+                <div>
+                  <label htmlFor="password" className="input-label">Senha</label>
+                  <div className="relative">
+                    <input
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Mínimo 6 caracteres"
+                      className="input-field pr-11"
+                      autoComplete="new-password"
+                      {...register('password')}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {errors.password && (
+                    <p className="mt-1.5 text-xs text-red-400">{errors.password.message}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label htmlFor="confirmPassword" className="input-label">Confirmar senha</label>
+                  <input
+                    id="confirmPassword"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Repita a senha"
+                    className="input-field"
+                    autoComplete="new-password"
+                    {...register('confirmPassword')}
+                  />
+                  {errors.confirmPassword && (
+                    <p className="mt-1.5 text-xs text-red-400">{errors.confirmPassword.message}</p>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="btn-primary w-full justify-center py-3 text-base mt-2"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Criando conta...
+                    </>
+                  ) : (
+                    'Começar teste grátis de 7 dias'
+                  )}
+                </button>
+              </form>
+
+              <p className="text-center text-sm text-gray-500 mt-6">
+                Já tem conta?{' '}
+                <Link href="/auth/login" className="text-brand-400 hover:text-brand-300 font-medium transition-colors">
+                  Entrar
+                </Link>
+              </p>
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   QrCode, LayoutDashboard, Tag, UtensilsCrossed,
-  Settings, LogOut, Menu, X, ExternalLink
+  Settings, LogOut, Menu, X, ExternalLink, CreditCard
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Restaurant } from '@/types/database'
@@ -21,6 +21,7 @@ const navItems = [
   { href: '/admin/categories', label: 'Categorias', icon: Tag },
   { href: '/admin/items', label: 'Itens do Cardápio', icon: UtensilsCrossed },
   { href: '/admin/restaurant', label: 'Configurações', icon: Settings },
+  { href: '/admin/subscription', label: 'Minha Assinatura', icon: CreditCard },
 ]
 
 export default function AdminSidebar({ restaurant }: AdminSidebarProps) {
