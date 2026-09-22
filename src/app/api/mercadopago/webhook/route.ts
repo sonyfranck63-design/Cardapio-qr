@@ -2,13 +2,17 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { paymentClient } from '@/lib/mercadopago'
 
-// Cliente Supabase com permissão para atualizar restaurantes
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-const supabase = createClient(supabaseUrl, supabaseKey)
+export const dynamic = 'force-dynamic'
+
+function getSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key'
+  return createClient(supabaseUrl, supabaseKey)
+}
 
 export async function POST(req: Request) {
   try {
+    const supabase = getSupabaseClient()
     const url = new URL(req.url)
     const topic = url.searchParams.get('topic') || url.searchParams.get('type')
     const paymentId = url.searchParams.get('id') || url.searchParams.get('data.id')
