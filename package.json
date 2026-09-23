@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "test:load": ".bin\\k6.exe run tests/load/public-menu.js",
-    "test:concurrency": "node tests/api/webhook-concurrency.js"
+    "test:concurrency": "node tests/api/webhook-concurrency.js",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
@@ -26,6 +27,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
