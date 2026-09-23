@@ -38,6 +38,7 @@ export default async function CategoriesPage() {
 
       <CategoriesManager
         restaurantId={restaurant.id}
+        restaurantSlug={restaurant.slug}
         initialCategories={categories ?? []}
       />
     </div>

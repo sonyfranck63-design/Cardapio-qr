@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { isSuperAdminUser } from '@/lib/superadmin'
+import { revalidateMenuAction } from '@/app/actions/revalidate'
 
 export const dynamic = 'force-dynamic'
 
@@ -125,6 +126,9 @@ export async function POST(
         error: 'Erro ao atualizar assinatura do restaurante no banco de dados.'
       }, { status: 500 })
     }
+
+    // Revalidação sob demanda imediata do cardápio público
+    await revalidateMenuAction({ slug: restaurant.slug, restaurantId: restaurant.id })
 
     return NextResponse.json({
       success: true,

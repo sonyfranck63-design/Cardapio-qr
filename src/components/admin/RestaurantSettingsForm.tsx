@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase/client'
 import { Restaurant } from '@/types/database'
 import { slugify } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
+import { revalidateMenuAction } from '@/app/actions/revalidate'
 
 const restaurantSchema = z.object({
   name: z.string().min(2, 'Nome deve ter ao menos 2 caracteres'),
@@ -103,6 +104,7 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
     setLogoUrl(urlWithCache)
 
     await supabase.from('restaurants').update({ logo_url: publicUrl }).eq('id', restaurant.id)
+    await revalidateMenuAction({ slug: restaurant.slug, restaurantId: restaurant.id })
     toast.success('Logo atualizada!')
     setUploadingLogo(false)
   }
@@ -161,6 +163,12 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
     if (error) {
       toast.error('Erro ao salvar configurações')
       return
+    }
+
+    // Revalidação sob demanda: revalida slug novo e slug antigo se tiver mudado
+    await revalidateMenuAction({ slug: data.slug, restaurantId: restaurant.id })
+    if (data.slug !== restaurant.slug) {
+      await revalidateMenuAction({ slug: restaurant.slug })
     }
 
     toast.success('Configurações salvas!')

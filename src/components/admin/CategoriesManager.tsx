@@ -9,6 +9,7 @@ import { Plus, Pencil, Trash2, Loader2, Tag, GripVertical, Check, X } from 'luci
 import { createClient } from '@/lib/supabase/client'
 import { Category } from '@/types/database'
 import { useRouter } from 'next/navigation'
+import { revalidateMenuAction } from '@/app/actions/revalidate'
 
 const categorySchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório').max(50, 'Máximo 50 caracteres'),
@@ -17,10 +18,11 @@ type CategoryForm = z.infer<typeof categorySchema>
 
 interface CategoriesManagerProps {
   restaurantId: string
+  restaurantSlug?: string
   initialCategories: Category[]
 }
 
-export default function CategoriesManager({ restaurantId, initialCategories }: CategoriesManagerProps) {
+export default function CategoriesManager({ restaurantId, restaurantSlug, initialCategories }: CategoriesManagerProps) {
   const router = useRouter()
   const supabase = createClient()
   const [categories, setCategories] = useState<Category[]>(initialCategories)
@@ -56,6 +58,8 @@ export default function CategoriesManager({ restaurantId, initialCategories }: C
     setCategories(prev => [...prev, created])
     reset()
     toast.success('Categoria criada!')
+    // Revalidação sob demanda imediata do cardápio público
+    revalidateMenuAction({ slug: restaurantSlug, restaurantId })
     router.refresh()
   }
 
@@ -75,6 +79,8 @@ export default function CategoriesManager({ restaurantId, initialCategories }: C
     setCategories(prev => prev.map(c => c.id === id ? { ...c, name: editName.trim() } : c))
     setEditingId(null)
     toast.success('Categoria atualizada!')
+    // Revalidação sob demanda imediata do cardápio público
+    revalidateMenuAction({ slug: restaurantSlug, restaurantId })
     router.refresh()
   }
 
@@ -104,6 +110,8 @@ export default function CategoriesManager({ restaurantId, initialCategories }: C
     setCategories(prev => prev.filter(c => c.id !== id))
     toast.success('Categoria excluída')
     setDeletingId(null)
+    // Revalidação sob demanda imediata do cardápio público
+    revalidateMenuAction({ slug: restaurantSlug, restaurantId })
     router.refresh()
   }
 

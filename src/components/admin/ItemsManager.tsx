@@ -9,14 +9,16 @@ import { MenuItem, Category } from '@/types/database'
 import { formatCurrency } from '@/lib/utils'
 import ItemFormModal from './ItemFormModal'
 import { useRouter } from 'next/navigation'
+import { revalidateMenuAction } from '@/app/actions/revalidate'
 
 interface ItemsManagerProps {
   restaurantId: string
+  restaurantSlug?: string
   categories: Category[]
   initialItems: MenuItem[]
 }
 
-export default function ItemsManager({ restaurantId, categories, initialItems }: ItemsManagerProps) {
+export default function ItemsManager({ restaurantId, restaurantSlug, categories, initialItems }: ItemsManagerProps) {
   const router = useRouter()
   const supabase = createClient()
   const [items, setItems] = useState<MenuItem[]>(initialItems)
@@ -46,6 +48,8 @@ export default function ItemsManager({ restaurantId, categories, initialItems }:
     } else {
       setItems(prev => prev.map(i => i.id === item.id ? { ...i, is_active: newStatus } : i))
       toast.success(newStatus ? 'Item ativado' : 'Item desativado')
+      // Revalidação sob demanda imediata do cardápio público
+      revalidateMenuAction({ slug: restaurantSlug, restaurantId })
     }
     setTogglingId(null)
     router.refresh()
@@ -62,6 +66,8 @@ export default function ItemsManager({ restaurantId, categories, initialItems }:
     } else {
       setItems(prev => prev.filter(i => i.id !== id))
       toast.success('Item excluído')
+      // Revalidação sob demanda imediata do cardápio público
+      revalidateMenuAction({ slug: restaurantSlug, restaurantId })
     }
     setDeletingId(null)
     router.refresh()
@@ -75,6 +81,8 @@ export default function ItemsManager({ restaurantId, categories, initialItems }:
     })
     setShowModal(false)
     setEditingItem(null)
+    // Revalidação sob demanda imediata do cardápio público
+    revalidateMenuAction({ slug: restaurantSlug, restaurantId })
     router.refresh()
   }
 

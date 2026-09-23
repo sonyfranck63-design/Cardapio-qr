@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { getCachedMenuData } from '@/lib/menu-cache'
 import { CategoryWithItems } from '@/types/database'
 import MenuHeader from '@/components/public/MenuHeader'
 import CategorySection from '@/components/public/CategorySection'
@@ -10,13 +10,12 @@ interface MenuPageProps {
   params: { slug: string }
 }
 
+/**
+ * Geração de Metadata otimizada:
+ * Reutiliza os dados cacheados via `getCachedMenuData`, evitando queries duplicadas ao Supabase.
+ */
 export async function generateMetadata({ params }: MenuPageProps): Promise<Metadata> {
-  const supabase = createClient()
-  const { data: restaurant } = await supabase
-    .from('restaurants')
-    .select('*')
-    .eq('slug', params.slug)
-    .maybeSingle()
+  const { restaurant } = await getCachedMenuData(params.slug)
 
   if (!restaurant) {
     return { title: 'Cardápio não encontrado' }
@@ -32,17 +31,16 @@ export async function generateMetadata({ params }: MenuPageProps): Promise<Metad
   }
 }
 
+/**
+ * Página pública do Cardápio:
+ * Renderização estática com ISR (Incremental Static Regeneration) e cache agressivo em memória.
+ * Não consome cookies ou sessões de usuário, permitindo suporte a milhares de clientes simultâneos
+ * com zero consultas repetidas ao banco de dados PostgreSQL.
+ */
 export default async function MenuPage({ params }: MenuPageProps) {
-  const supabase = createClient()
+  const { restaurant, categories } = await getCachedMenuData(params.slug)
 
-  // Busca o restaurante pelo slug
-  const { data: restaurant, error: restaurantError } = await supabase
-    .from('restaurants')
-    .select('*')
-    .eq('slug', params.slug)
-    .single()
-
-  if (restaurantError || !restaurant) {
+  if (!restaurant) {
     notFound()
   }
 
@@ -75,23 +73,9 @@ export default async function MenuPage({ params }: MenuPageProps) {
     )
   }
 
-  // Busca categorias com seus itens ATIVOS
-  const { data: categoriesData } = await supabase
-    .from('categories')
-    .select(`
-      *,
-      menu_items (
-        *
-      )
-    `)
-    .eq('restaurant_id', restaurant.id)
-    .order('order', { ascending: true })
-
-  const categories = (categoriesData ?? []) as CategoryWithItems[]
-
   // Filtra categorias que têm pelo menos um item ativo
   const categoriesWithActiveItems = categories.filter(cat =>
-    cat.menu_items.some(item => item.is_active)
+    cat.menu_items && cat.menu_items.some(item => item.is_active)
   )
 
   const hasWhatsApp = !!restaurant.whatsapp
@@ -176,4 +160,8 @@ export default async function MenuPage({ params }: MenuPageProps) {
   )
 }
 
-export const revalidate = 60 // Revalida a cada 60 segundos
+/**
+ * Revalidação temporal de fallback para ISR (em segundos).
+ * A página é atualizada instantaneamente sob demanda através de On-Demand Revalidation.
+ */
+export const revalidate = 3600

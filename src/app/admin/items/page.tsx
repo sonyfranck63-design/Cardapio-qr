@@ -53,6 +53,7 @@ export default async function ItemsPage() {
       ) : (
         <ItemsManager
           restaurantId={restaurant.id}
+          restaurantSlug={restaurant.slug}
           categories={categories ?? []}
           initialItems={items ?? []}
         />
