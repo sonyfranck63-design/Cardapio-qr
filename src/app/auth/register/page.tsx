@@ -43,10 +43,15 @@ export default function RegisterPage() {
 
   async function onSubmit(data: RegisterForm) {
     // 1. Criar usuário no Supabase Auth com metadados do restaurante
+    const redirectUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}/auth/callback`
+      : `${process.env.NEXT_PUBLIC_APP_URL || ''}/auth/callback`
+
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: data.email,
       password: data.password,
       options: {
+        emailRedirectTo: redirectUrl,
         data: {
           restaurant_name: data.restaurantName,
         },
