@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:load": ".bin\\k6.exe run tests/load/public-menu.js",
+    "test:concurrency": "node tests/api/webhook-concurrency.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
