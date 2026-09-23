@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import toast from 'react-hot-toast'
-import { Loader2, Upload, X, Save, Phone, Link as LinkIcon } from 'lucide-react'
+import { Loader2, Upload, X, Save, Phone, Link as LinkIcon, Trash2, AlertTriangle } from 'lucide-react'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { Restaurant } from '@/types/database'
@@ -36,6 +36,9 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
   const supabase = createClient()
   const [logoUrl, setLogoUrl] = useState<string | null>(restaurant.logo_url)
   const [uploadingLogo, setUploadingLogo] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const {
@@ -102,6 +105,33 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
     await supabase.from('restaurants').update({ logo_url: publicUrl }).eq('id', restaurant.id)
     toast.success('Logo atualizada!')
     setUploadingLogo(false)
+  }
+
+  async function handleDeleteAccount() {
+    if (deleteConfirmText !== 'EXCLUIR') return
+
+    try {
+      setIsDeletingAccount(true)
+      const res = await fetch('/api/account/delete', {
+        method: 'POST',
+      })
+
+      const data = await res.json()
+
+      if (!res.ok || !data.success) {
+        toast.error(data.error || 'Erro ao excluir conta')
+        setIsDeletingAccount(false)
+        return
+      }
+
+      toast.success('Sua conta e dados foram excluídos com sucesso.')
+      await supabase.auth.signOut()
+      router.push('/')
+      router.refresh()
+    } catch {
+      toast.error('Ocorreu um erro ao tentar excluir a conta')
+      setIsDeletingAccount(false)
+    }
   }
 
   async function onSubmit(data: RestaurantForm) {
@@ -273,6 +303,75 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
           <><Save className="w-4 h-4" />Salvar configurações</>
         )}
       </button>
+
+      {/* Zona de Perigo: Exclusão de Conta */}
+      <div className="border border-red-500/20 bg-red-500/5 rounded-2xl p-6 space-y-4 mt-12">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center text-red-400 shrink-0">
+            <AlertTriangle className="w-5 h-5" />
+          </div>
+          <div>
+            <h2 className="text-base font-semibold text-white">Zona de Perigo</h2>
+            <p className="text-xs text-gray-400">Ações irreversíveis para a sua conta e restaurante</p>
+          </div>
+        </div>
+
+        <p className="text-sm text-gray-400 leading-relaxed">
+          Ao excluir sua conta, todos os dados do seu restaurante (pratos, categorias, configurações e imagens) serão{' '}
+          <strong className="text-red-300">permanentemente removidos</strong> do banco de dados. Esta ação não poderá ser desfeita.
+        </p>
+
+        {!showDeleteConfirm ? (
+          <div>
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirm(true)}
+              className="px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 hover:text-red-300 font-medium text-sm rounded-xl transition-all flex items-center gap-2"
+            >
+              <Trash2 className="w-4 h-4" />
+              Excluir minha conta e restaurante
+            </button>
+          </div>
+        ) : (
+          <div className="p-4 bg-red-950/40 border border-red-500/30 rounded-xl space-y-3">
+            <p className="text-sm text-red-200 font-medium">
+              Tem certeza absoluta? Para confirmar, digite <span className="font-bold underline text-white">EXCLUIR</span> no campo abaixo:
+            </p>
+            <input
+              type="text"
+              placeholder="Digite EXCLUIR"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              className="input-field text-sm border-red-500/40 focus:border-red-500"
+            />
+            <div className="flex items-center gap-3 pt-1">
+              <button
+                type="button"
+                disabled={deleteConfirmText !== 'EXCLUIR' || isDeletingAccount}
+                onClick={handleDeleteAccount}
+                className="px-4 py-2 bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium text-sm rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-red-600/30"
+              >
+                {isDeletingAccount ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Excluindo permanentemente...</>
+                ) : (
+                  <><Trash2 className="w-4 h-4" /> Confirmar Exclusão Definitiva</>
+                )}
+              </button>
+              <button
+                type="button"
+                disabled={isDeletingAccount}
+                onClick={() => {
+                  setShowDeleteConfirm(false)
+                  setDeleteConfirmText('')
+                }}
+                className="px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 text-sm font-medium rounded-xl transition-all"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </form>
   )
 }
