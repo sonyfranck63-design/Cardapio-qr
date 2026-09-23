@@ -53,6 +53,7 @@ export default async function MenuPage({ params }: MenuPageProps) {
   const isSuspended =
     restaurant.subscription_status === 'past_due' ||
     restaurant.subscription_status === 'canceled' ||
+    restaurant.subscription_status === 'expired' ||
     isExpired
 
   if (isSuspended) {

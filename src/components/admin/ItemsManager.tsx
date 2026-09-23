@@ -176,7 +176,7 @@ export default function ItemsManager({ restaurantId, categories, initialItems }:
                 </span>
 
                 {/* Actions */}
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                   {/* Toggle active */}
                   <button
                     onClick={() => handleToggleActive(item)}

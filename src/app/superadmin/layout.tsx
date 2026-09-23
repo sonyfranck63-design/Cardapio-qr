@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { ShieldCheck, Store, LogOut, ArrowLeft, Crown } from 'lucide-react'
 
+import { isSuperAdminUser } from '@/lib/superadmin'
+
 export const dynamic = 'force-dynamic'
 
 export default async function SuperAdminLayout({
@@ -17,12 +19,7 @@ export default async function SuperAdminLayout({
     redirect('/auth/login')
   }
 
-  const adminEmails = (process.env.SUPERADMIN_EMAILS || 'sonyfranck63@gmail.com')
-    .split(',')
-    .map(e => e.trim().toLowerCase())
-
-  const userEmail = user.email?.toLowerCase() || ''
-  if (!adminEmails.includes(userEmail)) {
+  if (!isSuperAdminUser(user)) {
     redirect('/admin')
   }
 

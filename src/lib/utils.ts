@@ -29,7 +29,10 @@ export function slugify(text: string): string {
  * Monta o link do WhatsApp com mensagem pré-definida
  */
 export function buildWhatsAppUrl(phone: string, message: string): string {
-  const cleanPhone = phone.replace(/\D/g, '')
+  let cleanPhone = phone.replace(/\D/g, '')
+  if (cleanPhone.length === 10 || cleanPhone.length === 11) {
+    cleanPhone = `55${cleanPhone}`
+  }
   const encodedMessage = encodeURIComponent(message)
   return `https://wa.me/${cleanPhone}?text=${encodedMessage}`
 }

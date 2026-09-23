@@ -65,45 +65,7 @@ export default function RegisterPage() {
       return
     }
 
-    // Se temos sessão ativa, tenta inserir ou garantir que o restaurante existe
-    let slug = slugify(data.restaurantName)
-
-    const { data: existing } = await supabase
-      .from('restaurants')
-      .select('*')
-      .eq('slug', slug)
-      .maybeSingle()
-
-    if (existing) {
-      slug = `${slug}-${Date.now().toString(36)}`
-    }
-
-    // Verifica se já foi criado pelo trigger do banco
-    const { data: myRest } = await supabase
-      .from('restaurants')
-      .select('id')
-      .eq('user_id', authData.user.id)
-      .maybeSingle()
-
-    if (!myRest) {
-      const expiresAt = new Date()
-      expiresAt.setDate(expiresAt.getDate() + 7)
-
-      const { error: restaurantError } = await supabase.from('restaurants').insert({
-        user_id: authData.user.id,
-        name: data.restaurantName,
-        slug,
-        subscription_status: 'trial',
-        subscription_plan: 'mensal',
-        subscription_expires_at: expiresAt.toISOString(),
-      })
-
-      if (restaurantError) {
-        console.error('Erro ao criar restaurante:', restaurantError)
-        // Mesmo com erro de insert manual, se o trigger criar no banco, o usuário não deve ficar travado
-      }
-    }
-
+    // Sessão ativa: o trigger do banco cria o restaurante de forma atômica e segura.
     toast.success('Conta criada com 7 dias grátis! Bem-vindo 🎉')
     router.push('/admin')
     router.refresh()

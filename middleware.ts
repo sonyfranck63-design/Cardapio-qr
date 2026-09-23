@@ -1,6 +1,8 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+import { isSuperAdminEmail } from '@/lib/superadmin'
+
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
@@ -56,13 +58,8 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(url)
     }
 
-    const adminEmails = (process.env.SUPERADMIN_EMAILS || 'sonyfranck63@gmail.com')
-      .split(',')
-      .map(e => e.trim().toLowerCase())
-
-    const userEmail = user.email?.toLowerCase() || ''
-    if (!adminEmails.includes(userEmail)) {
-      // Redireciona usuários regulares para seu próprio painel
+    if (!isSuperAdminEmail(user.email)) {
+      // Redireciona usuários sem privilégio administrativo para o painel do seu restaurante
       const url = request.nextUrl.clone()
       url.pathname = '/admin'
       return NextResponse.redirect(url)

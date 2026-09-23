@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Restaurant } from '@/types/database'
@@ -32,7 +32,7 @@ export default function SuperAdminPage() {
 
   const supabase = createClient()
 
-  async function loadRestaurants() {
+  const loadRestaurants = useCallback(async () => {
     setLoading(true)
     try {
       const { data, error } = await supabase
@@ -50,11 +50,11 @@ export default function SuperAdminPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [supabase])
 
   useEffect(() => {
     loadRestaurants()
-  }, [])
+  }, [loadRestaurants])
 
   async function handleSubscriptionAction(restaurantId: string, action: 'extend_30' | 'extend_7' | 'suspend') {
     try {

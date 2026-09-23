@@ -174,7 +174,7 @@ export default function CategoriesManager({ restaurantId, initialCategories }: C
                 ) : (
                   <>
                     <span className="flex-1 text-sm font-medium text-gray-200">{cat.name}</span>
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => { setEditingId(cat.id); setEditName(cat.name) }}
                         className="p-2 text-gray-500 hover:text-brand-400 hover:bg-brand-500/10 rounded-lg transition-colors"

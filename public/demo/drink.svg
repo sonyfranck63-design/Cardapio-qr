@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <defs>
+    <linearGradient id="bgDrink" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7"/>
+      <stop offset="100%" stop-color="#0369a1"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="400" rx="40" fill="url(#bgDrink)"/>
+  <circle cx="200" cy="200" r="140" fill="#ffffff" fill-opacity="0.1"/>
+  <path d="M150 140 L250 140 L220 280 L180 280 Z" fill="#38bdf8" fill-opacity="0.8"/>
+  <line x1="200" y1="280" x2="200" y2="330" stroke="#bae6fd" stroke-width="8" stroke-linecap="round"/>
+  <line x1="160" y1="330" x2="240" y2="330" stroke="#bae6fd" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="200" cy="180" r="14" fill="#facc15"/>
+</svg>

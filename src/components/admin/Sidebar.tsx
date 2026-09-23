@@ -32,17 +32,24 @@ export default function AdminSidebar({ restaurant }: AdminSidebarProps) {
   const supabase = createClient()
 
   useEffect(() => {
+    let isMounted = true
     async function checkAdmin() {
-      const { data: { user } } = await supabase.auth.getUser()
-      const adminEmails = (process.env.NEXT_PUBLIC_SUPERADMIN_EMAILS || 'sonyfranck63@gmail.com')
-        .split(',')
-        .map(e => e.trim().toLowerCase())
-
-      if (user?.email && adminEmails.includes(user.email.toLowerCase())) {
-        setIsSuperAdmin(true)
+      try {
+        const res = await fetch('/api/auth/is-superadmin')
+        if (res.ok) {
+          const data = await res.json()
+          if (isMounted && data?.isSuperAdmin) {
+            setIsSuperAdmin(true)
+          }
+        }
+      } catch {
+        // Falha de rede não ativa Super Admin
       }
     }
     checkAdmin()
+    return () => {
+      isMounted = false
+    }
   }, [])
 
   async function handleLogout() {

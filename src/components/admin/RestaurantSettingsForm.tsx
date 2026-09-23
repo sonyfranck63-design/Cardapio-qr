@@ -66,13 +66,19 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
     const file = e.target.files?.[0]
     if (!file) return
 
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif']
+    if (!allowedTypes.includes(file.type.toLowerCase())) {
+      toast.error('Formato inválido. Use JPG, PNG, WEBP ou GIF.')
+      return
+    }
+
     if (file.size > 2 * 1024 * 1024) {
       toast.error('Imagem deve ter no máximo 2MB')
       return
     }
 
     setUploadingLogo(true)
-    const ext = file.name.split('.').pop()
+    const ext = (file.name.split('.').pop() || 'png').toLowerCase().replace(/[^a-z0-9]/g, '')
     const fileName = `${restaurant.id}/logo.${ext}`
 
     const { error: uploadError } = await supabase.storage

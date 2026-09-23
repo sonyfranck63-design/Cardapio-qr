@@ -25,12 +25,10 @@ export async function POST(req: Request) {
     const hasToken = process.env.MERCADOPAGO_ACCESS_TOKEN && !process.env.MERCADOPAGO_ACCESS_TOKEN.startsWith('TEST-00000000')
 
     if (!hasToken) {
-      // Modo Demonstração / Simulação se ainda não configurou as credenciais reais no .env.local
-      return NextResponse.json({
-        url: `${appUrl}/admin/subscription?simulated=true`,
-        simulated: true,
-        message: 'Modo demonstração ativo (configure MERCADOPAGO_ACCESS_TOKEN no .env.local para pagamentos reais).',
-      })
+      return NextResponse.json(
+        { error: 'O gateway de pagamento está temporariamente indisponível. Entre em contato com o suporte.' },
+        { status: 503 }
+      )
     }
 
     // Monta o corpo da preferência de pagamento no Mercado Pago

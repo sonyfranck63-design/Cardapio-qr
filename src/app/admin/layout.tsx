@@ -14,13 +14,25 @@ export default async function AdminLayout({
     redirect('/auth/login')
   }
 
-  // Busca dados do restaurante
+  // Busca dados do restaurante vinculado ao usuário
   let { data: restaurant } = await supabase
     .from('restaurants')
     .select('*')
     .eq('user_id', user.id)
     .maybeSingle()
 
+  // Caso haja leve latência na execução do trigger do banco, efetua retry
+  if (!restaurant) {
+    await new Promise((resolve) => setTimeout(resolve, 400))
+    const { data: retried } = await supabase
+      .from('restaurants')
+      .select('*')
+      .eq('user_id', user.id)
+      .maybeSingle()
+    restaurant = retried
+  }
+
+  // Contingência segura apenas se o banco não possuir o trigger handle_new_user ativo
   if (!restaurant) {
     const rawName = user.user_metadata?.restaurant_name || 'Meu Restaurante'
     const cleanSlug = rawName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'restaurante'
@@ -42,17 +54,7 @@ export default async function AdminLayout({
       .select('*')
       .maybeSingle()
 
-    if (createdRest) {
-      restaurant = createdRest
-    } else {
-      // Tenta buscar novamente caso um trigger tenha acabado de criar
-      const { data: retried } = await supabase
-        .from('restaurants')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle()
-      restaurant = retried
-    }
+    restaurant = createdRest || null
   }
 
   if (!restaurant) {

@@ -65,13 +65,19 @@ export default function ItemFormModal({
     const file = e.target.files?.[0]
     if (!file) return
 
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif']
+    if (!allowedTypes.includes(file.type.toLowerCase())) {
+      toast.error('Formato inválido. Use JPG, PNG, WEBP ou GIF.')
+      return
+    }
+
     if (file.size > 5 * 1024 * 1024) {
       toast.error('Imagem deve ter no máximo 5MB')
       return
     }
 
     setUploadingImage(true)
-    const ext = file.name.split('.').pop()
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '')
     const fileName = `${restaurantId}/items/${Date.now()}.${ext}`
 
     const { error: uploadError } = await supabase.storage

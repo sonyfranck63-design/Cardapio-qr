@@ -10,26 +10,31 @@ export default function SubscriptionPage() {
   const [restaurant, setRestaurant] = useState<Restaurant | null>(null)
   const [loading, setLoading] = useState(true)
   const [processingPayment, setProcessingPayment] = useState(false)
-  const [simulating, setSimulating] = useState(false)
   const supabase = createClient()
 
-  async function loadRestaurant() {
-    setLoading(true)
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      const { data } = await supabase
-        .from('restaurants')
-        .select('*')
-        .eq('user_id', user.id)
-        .single()
-      setRestaurant(data)
-    }
-    setLoading(false)
-  }
-
   useEffect(() => {
+    let isMounted = true
+
+    async function loadRestaurant() {
+      setLoading(true)
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user && isMounted) {
+        const { data } = await supabase
+          .from('restaurants')
+          .select('*')
+          .eq('user_id', user.id)
+          .single()
+        if (isMounted) setRestaurant(data)
+      }
+      if (isMounted) setLoading(false)
+    }
+
     loadRestaurant()
-  }, [])
+
+    return () => {
+      isMounted = false
+    }
+  }, [supabase])
 
   if (loading) {
     return (
@@ -66,10 +71,6 @@ export default function SubscriptionPage() {
         return
       }
 
-      if (data.simulated) {
-        toast.success(data.message, { duration: 5000 })
-      }
-
       if (data.url) {
         window.location.href = data.url
       }
@@ -77,28 +78,6 @@ export default function SubscriptionPage() {
       toast.error('Erro ao conectar com o serviço de pagamentos.')
     } finally {
       setProcessingPayment(false)
-    }
-  }
-
-  async function handleSimulatePayment() {
-    try {
-      setSimulating(true)
-      const res = await fetch('/api/mercadopago/simulate-payment', {
-        method: 'POST',
-      })
-      const data = await res.json()
-
-      if (data.error) {
-        toast.error(data.error)
-        return
-      }
-
-      toast.success(data.message)
-      await loadRestaurant()
-    } catch (err: any) {
-      toast.error('Erro ao simular pagamento.')
-    } finally {
-      setSimulating(false)
     }
   }
 
@@ -245,25 +224,6 @@ export default function SubscriptionPage() {
               <div className="text-xs font-mono bg-black/40 px-2.5 py-1.5 rounded text-gray-300 truncate">
                 {restaurant.id}
               </div>
-            </div>
-          </div>
-
-          {/* Botão de teste para desenvolvimento */}
-          <div className="mt-6 pt-4 border-t border-white/10">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-gray-500 font-mono">Ambiente de Testes:</span>
-              <button
-                onClick={handleSimulatePayment}
-                disabled={simulating}
-                className="text-xs bg-white/10 hover:bg-white/20 text-gray-300 px-3 py-1.5 rounded-lg transition-colors flex items-center gap-1.5"
-              >
-                {simulating ? (
-                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                ) : (
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                )}
-                Simular Pagamento Aprovado (+30 dias)
-              </button>
             </div>
           </div>
         </div>

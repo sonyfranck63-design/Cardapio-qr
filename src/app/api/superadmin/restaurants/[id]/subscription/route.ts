@@ -1,13 +1,24 @@
 import { NextResponse } from 'next/server'
 import { createClient as createServerClient } from '@/lib/supabase/server'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
+import { isSuperAdminUser } from '@/lib/superadmin'
 
 export const dynamic = 'force-dynamic'
 
 function getAdminClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
-  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key'
-  return createAdminClient(supabaseUrl, supabaseKey)
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!supabaseUrl || !serviceRoleKey) {
+    throw new Error('Chave de administração (SUPABASE_SERVICE_ROLE_KEY) não configurada no servidor.')
+  }
+
+  return createAdminClient(supabaseUrl, serviceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  })
 }
 
 export async function POST(
@@ -20,20 +31,15 @@ export async function POST(
       return NextResponse.json({ error: 'ID do restaurante não fornecido' }, { status: 400 })
     }
 
-    // Valida autenticação do Super Admin
+    // Valida autenticação e autorização do Super Admin
     const userClient = createServerClient()
     const { data: { user }, error: authError } = await userClient.auth.getUser()
 
     if (authError || !user) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
     }
 
-    const adminEmails = (process.env.SUPERADMIN_EMAILS || 'sonyfranck63@gmail.com')
-      .split(',')
-      .map(e => e.trim().toLowerCase())
-
-    const userEmail = user.email?.toLowerCase() || ''
-    if (!adminEmails.includes(userEmail)) {
+    if (!isSuperAdminUser(user)) {
       return NextResponse.json({ error: 'Acesso restrito ao Super Admin' }, { status: 403 })
     }
 
@@ -107,24 +113,16 @@ export async function POST(
       updatePayload.mercadopago_payment_id = `MANUAL_ADMIN_${Date.now()}`
     }
 
-    // Tenta atualizar usando o adminClient (service_role ou anon)
-    let updateResult = await supabase
+    // Executa a atualização com privilégios administrativos
+    const { error: updateError } = await supabase
       .from('restaurants')
       .update(updatePayload)
       .eq('id', restaurantId)
 
-    // Se falhou por RLS e o restaurante pertencer ao próprio admin, tenta com userClient
-    if (updateResult.error) {
-      updateResult = await userClient
-        .from('restaurants')
-        .update(updatePayload)
-        .eq('id', restaurantId)
-    }
-
-    if (updateResult.error) {
+    if (updateError) {
+      console.error('[Super Admin] Erro ao atualizar assinatura:', updateError)
       return NextResponse.json({ 
-        error: updateResult.error.message || 'Erro ao atualizar assinatura',
-        hint: 'Verifique se a SUPABASE_SERVICE_ROLE_KEY está configurada no .env.local ou na Vercel.'
+        error: 'Erro ao atualizar assinatura do restaurante no banco de dados.'
       }, { status: 500 })
     }
 
