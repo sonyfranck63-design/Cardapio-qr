@@ -11,7 +11,7 @@ export default function CategorySection({ category }: CategorySectionProps) {
   if (activeItems.length === 0) return null
 
   return (
-    <section id={`cat-${category.id}`} className="mb-8">
+    <section id={`cat-${category.id}`} className="mb-8 scroll-mt-16 sm:scroll-mt-20">
       {/* Category title */}
       <div className="flex items-center gap-3 mb-4 px-4">
         <h2 className="text-base font-bold text-gray-800">{category.name}</h2>

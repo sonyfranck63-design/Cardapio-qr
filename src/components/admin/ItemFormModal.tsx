@@ -9,6 +9,7 @@ import { X, Upload, Loader2, ImageIcon } from 'lucide-react'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { MenuItem, Category } from '@/types/database'
+import { compressImage } from '@/lib/image-compress'
 
 const itemSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
@@ -77,12 +78,12 @@ export default function ItemFormModal({
     }
 
     setUploadingImage(true)
-    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '')
-    const fileName = `${restaurantId}/items/${Date.now()}.${ext}`
+    const compressed = await compressImage(file, { maxWidth: 1200, maxHeight: 1200, quality: 0.8 })
+    const fileName = `${restaurantId}/items/${Date.now()}.webp`
 
     const { error: uploadError } = await supabase.storage
       .from('restaurant-assets')
-      .upload(fileName, file, { upsert: true })
+      .upload(fileName, compressed, { upsert: true, contentType: 'image/webp' })
 
     if (uploadError) {
       toast.error('Erro ao enviar imagem')
@@ -124,9 +125,20 @@ export default function ItemFormModal({
       if (error) { toast.error('Erro ao salvar item'); return }
       result = updated
     } else {
+      // Busca o maior order existente na categoria para colocar o novo item no final
+      const { data: lastItem } = await supabase
+        .from('menu_items')
+        .select('order')
+        .eq('category_id', data.category_id)
+        .order('order', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+      const nextOrder = (lastItem?.order ?? -1) + 1
+
       const { data: created, error } = await supabase
         .from('menu_items')
-        .insert({ ...payload, order: 0 })
+        .insert({ ...payload, order: nextOrder })
         .select()
         .single()
 

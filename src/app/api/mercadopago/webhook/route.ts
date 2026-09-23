@@ -1,17 +1,15 @@
 import { NextResponse } from 'next/server'
+import { WebhookSignatureValidator, InvalidWebhookSignatureError } from 'mercadopago'
 import { paymentClient } from '@/lib/mercadopago'
 import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import { revalidateMenuAction } from '@/app/actions/revalidate'
+import { PLAN_PRICE } from '@/lib/plans'
 
 export const dynamic = 'force-dynamic'
 
-// Mutex em memória para bloquear race conditions imediatas no mesmo milissegundo
-const activePaymentLocks = new Set<string>()
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 export async function POST(req: Request) {
-  let lockAcquired = false
-  let paymentLockKey: string | null = null
-
   try {
     const url = new URL(req.url)
     const topic = url.searchParams.get('topic') || url.searchParams.get('type')
@@ -28,143 +26,109 @@ export async function POST(req: Request) {
     const isPaymentNotification =
       topic === 'payment' ||
       bodyData?.action?.includes('payment') ||
-      bodyData?.type === 'payment' ||
-      !!bodyData?.mockPaymentInfo
+      bodyData?.type === 'payment'
 
     if (!effectiveId || !isPaymentNotification) {
-      return NextResponse.json({ received: true, ignored: true })
+      return NextResponse.json({ received: true, ignored: true }, { status: 200 })
     }
 
-    paymentLockKey = `payment:${effectiveId}`
+    // 1. Validação Criptográfica de Assinatura do Webhook (x-signature / x-request-id)
+    const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET
+    const isProduction = process.env.NODE_ENV === 'production'
 
-    // 1. Trava em memória contra race conditions de concorrência instantânea
-    if (activePaymentLocks.has(paymentLockKey)) {
-      console.warn(`[Mercado Pago Webhook] Requisição concorrente simultânea detectada para o pagamento ${effectiveId}. Bloqueando duplicação.`)
-      return NextResponse.json(
-        { received: true, duplicate: true, blocked_by: 'memory_lock' },
-        { status: 200 }
-      )
-    }
-
-    activePaymentLocks.add(paymentLockKey)
-    lockAcquired = true
-
-    // 2. Consulta à API do Mercado Pago ou suporte a Mock em Testes de Integração
-    let paymentInfo: any = null
-
-    if (bodyData?.mockPaymentInfo) {
-      // Permite testes automatizados de QA / integração sem transações financeiras reais
-      paymentInfo = bodyData.mockPaymentInfo
+    if (!secret) {
+      console.error('[Mercado Pago Webhook] MERCADOPAGO_WEBHOOK_SECRET não configurado.')
+      if (isProduction) {
+        return NextResponse.json(
+          { error: 'Configuração de webhook incompleta no servidor' },
+          { status: 500 }
+        )
+      }
     } else {
+      const xSignature = req.headers.get('x-signature')
+      const xRequestId = req.headers.get('x-request-id')
+
       try {
-        paymentInfo = await paymentClient.get({ id: effectiveId })
-      } catch (mpError: any) {
-        console.error('[Mercado Pago Webhook] Falha ao verificar pagamento na API do MP:', mpError)
-        return NextResponse.json({ error: 'Falha ao consultar pagamento no Mercado Pago' }, { status: 502 })
+        WebhookSignatureValidator.validate({
+          xSignature: xSignature || undefined,
+          xRequestId: xRequestId || undefined,
+          dataId: effectiveId,
+          secret,
+        })
+      } catch (validationError) {
+        if (validationError instanceof InvalidWebhookSignatureError) {
+          console.warn(`[Mercado Pago Webhook] Assinatura inválida para pagamento ${effectiveId}: ${validationError.reason}`)
+          return NextResponse.json({ error: 'Assinatura inválida' }, { status: 401 })
+        }
+        console.error('[Mercado Pago Webhook] Erro ao validar assinatura:', validationError)
+        return NextResponse.json({ error: 'Falha na validação de assinatura' }, { status: 401 })
       }
     }
 
-    // 3. Apenas pagamentos aprovados ativam ou renovam a assinatura
+    // 2. Consulta à API Oficial do Mercado Pago
+    let paymentInfo: any = null
+    try {
+      paymentInfo = await paymentClient.get({ id: effectiveId })
+    } catch (mpError: any) {
+      console.error('[Mercado Pago Webhook] Falha ao consultar pagamento no Mercado Pago:', mpError)
+      return NextResponse.json({ error: 'Falha ao consultar pagamento no gateway' }, { status: 502 })
+    }
+
+    // 3. Validações de integridade do pagamento
     if (paymentInfo && paymentInfo.status === 'approved') {
       const restaurantId = paymentInfo.external_reference
+      const transactionAmount = Number(paymentInfo.transaction_amount)
 
-      if (!restaurantId) {
-        console.warn(`[Mercado Pago Webhook] Pagamento ${effectiveId} sem external_reference (ID do restaurante).`)
-        return NextResponse.json({ error: 'External reference não encontrada' }, { status: 400 })
+      // Valida se external_reference é um UUID válido
+      if (!restaurantId || !UUID_REGEX.test(restaurantId)) {
+        console.warn(`[Mercado Pago Webhook] Pagamento ${effectiveId} possui external_reference inválida: ${restaurantId}`)
+        return NextResponse.json({ error: 'ID de restaurante inválido' }, { status: 400 })
+      }
+
+      // Valida se o valor pago confere com o plano (com tolerância a arredondamento de centavos)
+      if (isNaN(transactionAmount) || Math.abs(transactionAmount - PLAN_PRICE) > 0.05) {
+        console.warn(`[Mercado Pago Webhook] Valor divergente para pagamento ${effectiveId}: recebido ${transactionAmount}, esperado ${PLAN_PRICE}`)
+        return NextResponse.json({ error: 'Valor da transação divergente' }, { status: 400 })
       }
 
       const supabase = getSupabaseAdminClient()
 
-      // 4. Idempotência no Banco: Tenta registrar o pagamento na tabela processed_payments
-      // A chave primária (id) garante atomicidade no PostgreSQL contra execuções paralelas
-      const { error: insertPaymentError } = await supabase
-        .from('processed_payments')
-        .insert({
-          id: String(effectiveId),
-          restaurant_id: restaurantId,
-          status: 'approved',
-          amount: paymentInfo.transaction_amount || null,
-        })
+      // 4. Execução Atômica e Idempotente via RPC no PostgreSQL
+      const { data: rpcResult, error: rpcError } = await supabase.rpc('apply_payment', {
+        p_payment_id: String(effectiveId),
+        p_restaurant_id: restaurantId,
+        p_amount: transactionAmount,
+      })
 
-      if (insertPaymentError) {
-        // Código 23505 é erro de chave primária duplicada no PostgreSQL
-        if (insertPaymentError.code === '23505' || insertPaymentError.message?.includes('duplicate key')) {
-          console.log(`[Mercado Pago Webhook] Pagamento ${effectiveId} já consta como processado em processed_payments.`)
-          return NextResponse.json({
-            received: true,
-            already_processed: true,
-            blocked_by: 'processed_payments_pk',
-          })
-        }
-        // Se a tabela ainda não tiver sido criada no Supabase remoto, continua com verificação secundária
-        console.warn('[Mercado Pago Webhook] processed_payments não disponível ou erro:', insertPaymentError.message)
+      if (rpcError) {
+        console.error(`[Mercado Pago Webhook] Erro ao executar apply_payment para ${effectiveId}:`, rpcError)
+        return NextResponse.json({ error: 'Erro ao processar pagamento no banco de dados' }, { status: 500 })
       }
 
-      // 5. Busca restaurante para calcular renovação e segunda camada de verificação
-      const { data: restaurant, error: fetchError } = await supabase
-        .from('restaurants')
-        .select('id, slug, subscription_status, subscription_expires_at, mercadopago_payment_id')
-        .eq('id', restaurantId)
-        .single()
-
-      if (fetchError || !restaurant) {
-        console.error(`[Mercado Pago Webhook] Restaurante não encontrado: ${restaurantId}`)
-        return NextResponse.json({ error: 'Restaurante não encontrado' }, { status: 404 })
-      }
-
-      // Verificação de segurança no campo do próprio restaurante
-      if (restaurant.mercadopago_payment_id === String(effectiveId)) {
-        console.log(`[Mercado Pago Webhook] Pagamento ${effectiveId} já processado anteriormente para o restaurante ${restaurantId}.`)
+      // Se já havia sido processado, retorna 200 idempotente
+      if (rpcResult?.already_processed) {
+        console.log(`[Mercado Pago Webhook] Pagamento ${effectiveId} já processado anteriormente.`)
         return NextResponse.json({
           received: true,
           already_processed: true,
-          blocked_by: 'restaurant_payment_id',
-        })
+        }, { status: 200 })
       }
 
-      // 6. Calcula a nova data de expiração (+30 dias)
-      let baseDate = new Date()
-      if (restaurant.subscription_expires_at) {
-        const currentExpiry = new Date(restaurant.subscription_expires_at)
-        if (currentExpiry > baseDate) {
-          baseDate = currentExpiry
-        }
-      }
-      baseDate.setDate(baseDate.getDate() + 30)
-
-      const { error: updateError } = await supabase
-        .from('restaurants')
-        .update({
-          subscription_status: 'active',
-          subscription_expires_at: baseDate.toISOString(),
-          mercadopago_payment_id: String(effectiveId),
-        })
-        .eq('id', restaurantId)
-
-      if (updateError) {
-        console.error('[Mercado Pago Webhook] Erro ao atualizar assinatura no banco:', updateError)
-        return NextResponse.json({ error: 'Erro ao registrar assinatura no banco de dados' }, { status: 500 })
-      }
-
-      // 7. Revalidação imediata do cardápio público
-      await revalidateMenuAction({ slug: restaurant.slug, restaurantId: restaurant.id })
+      // 5. Revalidação do cardápio público sob demanda
+      await revalidateMenuAction({ restaurantId })
 
       console.log(`[Mercado Pago Webhook] Assinatura estendida com sucesso para o restaurante: ${restaurantId}`)
       return NextResponse.json({
         received: true,
         success: true,
         restaurant_id: restaurantId,
-        new_expires_at: baseDate.toISOString(),
-      })
+        new_expires_at: rpcResult?.new_expires_at,
+      }, { status: 200 })
     }
 
-    return NextResponse.json({ received: true, status: paymentInfo?.status })
+    return NextResponse.json({ received: true, status: paymentInfo?.status }, { status: 200 })
   } catch (error: any) {
     console.error('[Mercado Pago Webhook] Erro interno:', error?.message || error)
     return NextResponse.json({ error: 'Erro ao processar notificação de pagamento' }, { status: 500 })
-  } finally {
-    if (lockAcquired && paymentLockKey) {
-      activePaymentLocks.delete(paymentLockKey)
-    }
   }
 }

@@ -2,11 +2,11 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
-import { Restaurant } from '@/types/database'
+import { PublicRestaurant } from '@/types/database'
 import { UtensilsCrossed } from 'lucide-react'
 
 interface MenuHeaderProps {
-  restaurant: Restaurant
+  restaurant: PublicRestaurant
 }
 
 export default function MenuHeader({ restaurant }: MenuHeaderProps) {

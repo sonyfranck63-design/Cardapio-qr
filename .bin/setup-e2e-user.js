@@ -13,8 +13,13 @@ envFile.split('\n').forEach(line => {
 const client = createClient(supabaseUrl, supabaseServiceKey);
 
 async function ensureTestUser() {
-  const email = 'qa-e2e-teste@cardapioqr.com';
-  const password = 'QaPassword@123456';
+  const email = process.env.TEST_USER_EMAIL;
+  const password = process.env.TEST_USER_PASSWORD;
+
+  if (!email || !password) {
+    console.error('❌ ERRO: Defina TEST_USER_EMAIL e TEST_USER_PASSWORD para executar o setup de usuário de teste.');
+    process.exit(1);
+  }
 
   // 1. Busca se já existe
   const { data: { users } } = await client.auth.admin.listUsers();

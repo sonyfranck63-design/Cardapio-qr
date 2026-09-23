@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { preferenceClient } from '@/lib/mercadopago'
+import { PLAN_PRICE } from '@/lib/plans'
 
 const checkoutRateLimit = new Map<string, number>()
 const RATE_LIMIT_MS = 15_000 // 15 segundos entre tentativas por restaurante
@@ -16,7 +17,7 @@ export async function POST(req: Request) {
 
     const { data: restaurant } = await supabase
       .from('restaurants')
-      .select('*')
+      .select('id, name')
       .eq('user_id', user.id)
       .single()
 
@@ -53,7 +54,7 @@ export async function POST(req: Request) {
           title: `Assinatura Mensal CardápioQR - ${restaurant.name}`,
           description: 'Acesso mensal completo ao Cardápio Digital QR Code',
           quantity: 1,
-          unit_price: 49.90,
+          unit_price: PLAN_PRICE,
           currency_id: 'BRL',
         },
       ],
@@ -80,9 +81,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ url: checkoutUrl })
   } catch (error: any) {
-    console.error('Erro ao gerar checkout Mercado Pago:', error)
+    console.error('[Mercado Pago Checkout] Erro ao criar preferência de pagamento:', error)
     return NextResponse.json(
-      { error: error?.message || 'Erro ao processar pagamento' },
+      { error: 'Não foi possível gerar a cobrança no momento. Tente novamente mais tarde.' },
       { status: 500 }
     )
   }

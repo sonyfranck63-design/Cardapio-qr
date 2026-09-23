@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { getSupabaseAdminClient } from '@/lib/supabase/admin'
 import AdminSidebar from '@/components/admin/Sidebar'
 
 export default async function AdminLayout({
@@ -33,6 +34,7 @@ export default async function AdminLayout({
   }
 
   // Contingência segura apenas se o banco não possuir o trigger handle_new_user ativo
+  // Usa getSupabaseAdminClient() porque o INSERT direto pelo usuário autenticado foi revogado por segurança
   if (!restaurant) {
     const rawName = user.user_metadata?.restaurant_name || 'Meu Restaurante'
     const cleanSlug = rawName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'restaurante'
@@ -41,7 +43,8 @@ export default async function AdminLayout({
     const expiresAt = new Date()
     expiresAt.setDate(expiresAt.getDate() + 7)
 
-    const { data: createdRest } = await supabase
+    const adminSupabase = getSupabaseAdminClient()
+    const { data: createdRest } = await adminSupabase
       .from('restaurants')
       .insert({
         user_id: user.id,

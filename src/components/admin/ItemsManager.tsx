@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import toast from 'react-hot-toast'
-import { Plus, Pencil, Trash2, Loader2, UtensilsCrossed, Eye, EyeOff } from 'lucide-react'
+import { Plus, Pencil, Trash2, Loader2, UtensilsCrossed, Eye, EyeOff, ChevronUp, ChevronDown } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { MenuItem, Category } from '@/types/database'
 import { formatCurrency } from '@/lib/utils'
@@ -86,6 +86,40 @@ export default function ItemsManager({ restaurantId, restaurantSlug, categories,
     router.refresh()
   }
 
+  async function handleMoveItem(item: MenuItem, direction: 'up' | 'down') {
+    const categoryItems = items
+      .filter(i => i.category_id === item.category_id)
+      .sort((a, b) => a.order - b.order)
+
+    const currentIndex = categoryItems.findIndex(i => i.id === item.id)
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
+
+    if (targetIndex < 0 || targetIndex >= categoryItems.length) return
+
+    const targetItem = categoryItems[targetIndex]
+    const currentOrder = item.order
+    const targetOrder = targetItem.order
+
+    setItems(prev =>
+      prev.map(i => {
+        if (i.id === item.id) return { ...i, order: targetOrder }
+        if (i.id === targetItem.id) return { ...i, order: currentOrder }
+        return i
+      })
+    )
+
+    try {
+      await Promise.all([
+        supabase.from('menu_items').update({ order: targetOrder }).eq('id', item.id),
+        supabase.from('menu_items').update({ order: currentOrder }).eq('id', targetItem.id),
+      ])
+      revalidateMenuAction({ slug: restaurantSlug, restaurantId })
+    } catch {
+      toast.error('Erro ao reordenar item')
+      setItems(items)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Toolbar */}
@@ -148,18 +182,47 @@ export default function ItemsManager({ restaurantId, restaurantSlug, categories,
           </div>
         ) : (
           <div className="divide-y divide-gray-800">
-            {filteredItems.map(item => (
-              <div key={item.id} className={`flex items-center gap-4 px-4 py-3 hover:bg-white/2 transition-colors group ${!item.is_active ? 'opacity-60' : ''}`}>
+            {filteredItems.map(item => {
+              const categoryItems = items
+                .filter(i => i.category_id === item.category_id)
+                .sort((a, b) => a.order - b.order)
+              const isFirst = categoryItems[0]?.id === item.id
+              const isLast = categoryItems[categoryItems.length - 1]?.id === item.id
+
+              return (
+              <div key={item.id} className={`flex items-center gap-3 sm:gap-4 px-4 py-3 hover:bg-white/2 transition-colors group ${!item.is_active ? 'opacity-60' : ''}`}>
+                {/* Botões de reordenação do item */}
+                <div className="flex flex-col gap-0.5 flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => handleMoveItem(item, 'up')}
+                    disabled={isFirst}
+                    aria-label={`Mover ${item.name} para cima`}
+                    className="p-1 rounded text-gray-500 hover:text-white hover:bg-white/10 disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-gray-500 transition-colors"
+                  >
+                    <ChevronUp className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleMoveItem(item, 'down')}
+                    disabled={isLast}
+                    aria-label={`Mover ${item.name} para baixo`}
+                    className="p-1 rounded text-gray-500 hover:text-white hover:bg-white/10 disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-gray-500 transition-colors"
+                  >
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
                 {/* Image */}
-                <div className="w-12 h-12 bg-white/5 rounded-xl overflow-hidden flex-shrink-0 border border-white/5">
+                <div className="w-12 h-12 bg-white/5 rounded-xl overflow-hidden flex-shrink-0 border border-white/5 relative">
                   {item.image_url ? (
                     <Image
                       src={item.image_url}
                       alt={item.name}
                       width={48}
                       height={48}
+                      sizes="48px"
                       className="object-cover w-full h-full"
-                      unoptimized
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
@@ -225,7 +288,8 @@ export default function ItemsManager({ restaurantId, restaurantSlug, categories,
                   </button>
                 </div>
               </div>
-            ))}
+            )
+          })}
           </div>
         )}
       </div>

@@ -161,3 +161,15 @@ export type MenuItem = Database['public']['Tables']['menu_items']['Row']
 export type CategoryWithItems = Category & {
   menu_items: MenuItem[]
 }
+
+export type PublicRestaurant = Pick<
+  Restaurant,
+  | 'id'
+  | 'name'
+  | 'slug'
+  | 'logo_url'
+  | 'whatsapp'
+  | 'whatsapp_message'
+  | 'subscription_status'
+  | 'subscription_expires_at'
+>

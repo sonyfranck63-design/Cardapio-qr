@@ -16,6 +16,9 @@ const nextConfig = {
       },
     ],
   },
+  experimental: {
+    instrumentationHook: true,
+  },
 }
 
 // Configurações do Sentry Webpack Plugin para upload de source maps e monitoramento de erros

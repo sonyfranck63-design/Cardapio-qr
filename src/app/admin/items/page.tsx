@@ -28,7 +28,7 @@ export default async function ItemsPage() {
       .from('menu_items')
       .select('*')
       .eq('restaurant_id', restaurant.id)
-      .order('created_at', { ascending: false }),
+      .order('order', { ascending: true }),
   ])
 
   return (

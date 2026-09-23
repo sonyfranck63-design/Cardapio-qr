@@ -5,7 +5,7 @@
 -- 1. Tabela de restaurantes
 CREATE TABLE IF NOT EXISTS public.restaurants (
   id                      UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id                 UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id                 UUID NOT NULL UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
   name                    TEXT NOT NULL,
   slug                    TEXT NOT NULL UNIQUE,
   logo_url                TEXT,
@@ -15,7 +15,14 @@ CREATE TABLE IF NOT EXISTS public.restaurants (
   subscription_plan       TEXT DEFAULT 'mensal' NOT NULL,
   subscription_expires_at TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '7 days') NOT NULL,
   mercadopago_payment_id  TEXT,
-  created_at              TIMESTAMPTZ DEFAULT NOW() NOT NULL
+  created_at              TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  CONSTRAINT restaurants_slug_format_check CHECK (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$' AND length(slug) >= 3 AND length(slug) <= 50),
+  CONSTRAINT restaurants_slug_reserved_check CHECK (slug NOT IN (
+    'admin', 'api', 'auth', 'demo', 'superadmin',
+    'login', 'register', 'sitemap', 'robots', '_next',
+    'app', 'checkout', 'termos', 'privacidade', 'public',
+    'static', 'dashboard'
+  ))
 );
 
 -- 2. Tabela de categorias
@@ -92,6 +99,23 @@ CREATE POLICY "restaurants_owner_update" ON public.restaurants FOR UPDATE USING 
 DROP POLICY IF EXISTS "restaurants_owner_delete" ON public.restaurants;
 CREATE POLICY "restaurants_owner_delete" ON public.restaurants FOR DELETE USING (auth.uid() = user_id);
 
+-- Restrições de colunas na tabela restaurants
+REVOKE INSERT, UPDATE ON public.restaurants FROM anon, authenticated;
+GRANT UPDATE (name, slug, logo_url, whatsapp, whatsapp_message) ON public.restaurants TO authenticated;
+
+REVOKE SELECT ON public.restaurants FROM anon;
+GRANT SELECT (
+  id,
+  name,
+  slug,
+  logo_url,
+  whatsapp,
+  whatsapp_message,
+  subscription_status,
+  subscription_expires_at,
+  created_at
+) ON public.restaurants TO anon;
+
 -- Policies: CATEGORIES
 DROP POLICY IF EXISTS "categories_public_read" ON public.categories;
 CREATE POLICY "categories_public_read" ON public.categories FOR SELECT USING (true);
@@ -123,7 +147,90 @@ DROP POLICY IF EXISTS "processed_payments_owner_read" ON public.processed_paymen
 CREATE POLICY "processed_payments_owner_read" ON public.processed_payments FOR SELECT USING (auth.uid() = (SELECT user_id FROM public.restaurants WHERE id = restaurant_id));
 
 -- ============================================================
--- STORAGE: Bucket para imagens
+-- FUNÇÃO ATÔMICA RPC: apply_payment
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.apply_payment(
+  p_payment_id TEXT,
+  p_restaurant_id UUID,
+  p_amount NUMERIC
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_already_processed BOOLEAN;
+  v_restaurant RECORD;
+  v_base_date TIMESTAMPTZ;
+  v_new_expiry TIMESTAMPTZ;
+BEGIN
+  -- 1. Verificação de idempotência
+  SELECT EXISTS(
+    SELECT 1 FROM public.processed_payments WHERE id = p_payment_id
+  ) INTO v_already_processed;
+
+  IF v_already_processed THEN
+    RETURN jsonb_build_object(
+      'success', true,
+      'already_processed', true,
+      'message', 'Pagamento já processado anteriormente'
+    );
+  END IF;
+
+  -- 2. Lock exclusivo da linha do restaurante
+  SELECT id, subscription_expires_at, mercadopago_payment_id
+  INTO v_restaurant
+  FROM public.restaurants
+  WHERE id = p_restaurant_id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Restaurante não encontrado: %', p_restaurant_id;
+  END IF;
+
+  -- 3. Inserção na tabela de pagamentos processados
+  INSERT INTO public.processed_payments (
+    id,
+    restaurant_id,
+    status,
+    amount
+  ) VALUES (
+    p_payment_id,
+    p_restaurant_id,
+    'approved',
+    p_amount
+  );
+
+  -- 4. Cálculo da nova data (+30 dias)
+  v_base_date := NOW();
+  IF v_restaurant.subscription_expires_at IS NOT NULL AND v_restaurant.subscription_expires_at > v_base_date THEN
+    v_base_date := v_restaurant.subscription_expires_at;
+  END IF;
+  v_new_expiry := v_base_date + INTERVAL '30 days';
+
+  -- 5. Atualização atômica
+  UPDATE public.restaurants
+  SET
+    subscription_status = 'active',
+    subscription_expires_at = v_new_expiry,
+    mercadopago_payment_id = p_payment_id
+  WHERE id = p_restaurant_id;
+
+  RETURN jsonb_build_object(
+    'success', true,
+    'already_processed', false,
+    'restaurant_id', p_restaurant_id,
+    'new_expires_at', v_new_expiry
+  );
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.apply_payment(TEXT, UUID, NUMERIC) FROM public, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.apply_payment(TEXT, UUID, NUMERIC) TO service_role;
+
+-- ============================================================
+-- STORAGE: Bucket para imagens (restaurant-assets)
 -- ============================================================
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES (
@@ -139,13 +246,45 @@ DROP POLICY IF EXISTS "storage_public_read" ON storage.objects;
 CREATE POLICY "storage_public_read" ON storage.objects FOR SELECT USING (bucket_id = 'restaurant-assets');
 
 DROP POLICY IF EXISTS "storage_authenticated_upload" ON storage.objects;
-CREATE POLICY "storage_authenticated_upload" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'restaurant-assets' AND auth.role() = 'authenticated');
+CREATE POLICY "storage_authenticated_upload" ON storage.objects
+FOR INSERT TO authenticated
+WITH CHECK (
+  bucket_id = 'restaurant-assets'
+  AND EXISTS (
+    SELECT 1 FROM public.restaurants r
+    WHERE r.id::text = (storage.foldername(name))[1]
+    AND r.user_id = auth.uid()
+  )
+);
 
 DROP POLICY IF EXISTS "storage_owner_update" ON storage.objects;
-CREATE POLICY "storage_owner_update" ON storage.objects FOR UPDATE USING (bucket_id = 'restaurant-assets' AND auth.uid()::text = (storage.foldername(name))[1]);
+CREATE POLICY "storage_owner_update" ON storage.objects
+FOR UPDATE TO authenticated
+USING (
+  bucket_id = 'restaurant-assets'
+  AND EXISTS (
+    SELECT 1 FROM public.restaurants r
+    WHERE r.id::text = (storage.foldername(name))[1]
+    AND r.user_id = auth.uid()
+  )
+);
 
 DROP POLICY IF EXISTS "storage_owner_delete" ON storage.objects;
-CREATE POLICY "storage_owner_delete" ON storage.objects FOR DELETE USING (bucket_id = 'restaurant-assets' AND auth.uid()::text = (storage.foldername(name))[1]);
+CREATE POLICY "storage_owner_delete" ON storage.objects
+FOR DELETE TO authenticated
+USING (
+  bucket_id = 'restaurant-assets'
+  AND EXISTS (
+    SELECT 1 FROM public.restaurants r
+    WHERE r.id::text = (storage.foldername(name))[1]
+    AND r.user_id = auth.uid()
+  )
+);
+
+-- ============================================================
+-- EXTENSÕES
+-- ============================================================
+CREATE EXTENSION IF NOT EXISTS unaccent;
 
 -- ============================================================
 -- TRIGGER: Criação Automática do Restaurante
@@ -158,8 +297,12 @@ DECLARE
   base_slug TEXT;
 BEGIN
   restaurant_name := COALESCE(new.raw_user_meta_data->>'restaurant_name', 'Meu Restaurante');
-  base_slug := lower(regexp_replace(restaurant_name, '[^a-zA-Z0-9]+', '-', 'g'));
+  
+  -- Remove acentos via unaccent, converte para minúsculas e substitui caracteres não-alfanuméricos
+  base_slug := lower(unaccent(restaurant_name));
+  base_slug := regexp_replace(base_slug, '[^a-z0-9]+', '-', 'g');
   base_slug := trim(both '-' from base_slug);
+  
   IF base_slug = '' THEN
     base_slug := 'restaurante';
   END IF;

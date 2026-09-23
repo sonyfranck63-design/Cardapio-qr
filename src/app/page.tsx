@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { QrCode, Smartphone, Zap, Check, ChevronRight, Star, Sparkles } from 'lucide-react'
+import { PLAN_PRICE } from '@/lib/plans'
 
 export default function LandingPage() {
   return (
@@ -167,7 +168,7 @@ export default function LandingPage() {
             </div>
             <div className="flex items-baseline justify-center gap-1 mb-2">
               <span className="text-2xl font-bold text-gray-300">R$</span>
-              <span className="text-5xl font-extrabold text-white">49,90</span>
+              <span className="text-5xl font-extrabold text-white">{PLAN_PRICE.toFixed(2).replace('.', ',')}</span>
               <span className="text-gray-400 text-sm">/mês</span>
             </div>
             <p className="text-emerald-400 font-medium text-sm mb-8">

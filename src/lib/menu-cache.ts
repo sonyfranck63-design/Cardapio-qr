@@ -1,9 +1,9 @@
 import { unstable_cache } from 'next/cache'
 import { getPublicSupabaseClient } from '@/lib/supabase/public'
-import { CategoryWithItems, Restaurant } from '@/types/database'
+import { CategoryWithItems, PublicRestaurant } from '@/types/database'
 
 export interface CachedMenuResult {
-  restaurant: Restaurant | null
+  restaurant: PublicRestaurant | null
   categories: CategoryWithItems[]
 }
 
@@ -23,10 +23,20 @@ export async function getCachedMenuData(slug: string): Promise<CachedMenuResult>
     async (targetSlug: string): Promise<CachedMenuResult> => {
       const supabase = getPublicSupabaseClient()
 
-      // 1. Busca restaurante pelo slug
+      // 1. Busca restaurante pelo slug trazendo APENAS dados públicos necessários
+      // user_id e mercadopago_payment_id NUNCA são expostos
       const { data: restaurant, error: restError } = await supabase
         .from('restaurants')
-        .select('*')
+        .select(`
+          id,
+          name,
+          slug,
+          logo_url,
+          whatsapp,
+          whatsapp_message,
+          subscription_status,
+          subscription_expires_at
+        `)
         .eq('slug', targetSlug)
         .maybeSingle()
 
@@ -47,7 +57,7 @@ export async function getCachedMenuData(slug: string): Promise<CachedMenuResult>
         .order('order', { ascending: true })
 
       if (catError || !categoriesData) {
-        return { restaurant, categories: [] }
+        return { restaurant: restaurant as PublicRestaurant, categories: [] }
       }
 
       const rawCategories = (categoriesData as unknown as CategoryWithItems[]) ?? []
@@ -57,7 +67,7 @@ export async function getCachedMenuData(slug: string): Promise<CachedMenuResult>
       }))
 
       return {
-        restaurant,
+        restaurant: restaurant as PublicRestaurant,
         categories,
       }
     },

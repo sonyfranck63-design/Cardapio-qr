@@ -4,6 +4,7 @@ import { Tag, UtensilsCrossed, Eye, EyeOff, ExternalLink, CreditCard, Sparkles, 
 import Link from 'next/link'
 import QRCodeDisplay from '@/components/admin/QRCodeDisplay'
 import { getMenuUrl } from '@/lib/utils'
+import { formatPlanPrice } from '@/lib/plans'
 
 export const metadata = {
   title: 'Dashboard',
@@ -66,7 +67,7 @@ export default async function AdminDashboard() {
             href="/admin/subscription"
             className="btn-primary bg-red-600 hover:bg-red-700 text-xs px-4 py-2.5 font-semibold shrink-0 text-center"
           >
-            Pagar Mensalidade (R$ 49,90)
+            Pagar Mensalidade ({formatPlanPrice()})
           </Link>
         </div>
       )}

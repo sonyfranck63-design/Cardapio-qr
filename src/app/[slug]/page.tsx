@@ -3,6 +3,7 @@ import { getCachedMenuData } from '@/lib/menu-cache'
 import { CategoryWithItems } from '@/types/database'
 import MenuHeader from '@/components/public/MenuHeader'
 import CategorySection from '@/components/public/CategorySection'
+import CategoryNav from '@/components/public/CategoryNav'
 import WhatsAppButton from '@/components/public/WhatsAppButton'
 import type { Metadata } from 'next'
 
@@ -100,26 +101,8 @@ export default async function MenuPage({ params }: MenuPageProps) {
 
       <MenuHeader restaurant={restaurant} />
 
-      {/* Category sticky nav */}
-      {categoriesWithActiveItems.length > 1 && (
-        <nav className="sticky top-0 z-30 bg-white border-b border-gray-100 shadow-sm">
-          <div className="max-w-lg mx-auto px-4">
-            <div className="flex gap-2 overflow-x-auto py-3 scrollbar-thin">
-              {categoriesWithActiveItems.map(cat => (
-                <a
-                  key={cat.id}
-                  href={`#cat-${cat.id}`}
-                  className="flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium
-                             bg-gray-100 text-gray-700 hover:bg-orange-500 hover:text-white
-                             transition-all duration-200 whitespace-nowrap"
-                >
-                  {cat.name}
-                </a>
-              ))}
-            </div>
-          </div>
-        </nav>
-      )}
+      {/* Category sticky nav com IntersectionObserver */}
+      <CategoryNav categories={categoriesWithActiveItems} />
 
       {/* Menu content */}
       <main className="max-w-lg mx-auto pt-6 pb-28">

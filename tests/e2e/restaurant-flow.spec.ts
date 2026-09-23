@@ -1,11 +1,12 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('Fluxo Crítico do Restaurante - Painel Administrativo', () => {
-  const TEST_EMAIL = process.env.TEST_USER_EMAIL || 'qa-e2e-teste@cardapioqr.com'
-  const TEST_PASSWORD = process.env.TEST_USER_PASSWORD || 'QaPassword@123456'
+  const TEST_EMAIL = process.env.TEST_USER_EMAIL || ''
+  const TEST_PASSWORD = process.env.TEST_USER_PASSWORD || ''
   const ITEM_NAME = `Burger QA Especial ${Date.now().toString().slice(-4)}`
 
   test('Deve realizar login, acessar o gerenciamento de itens, cadastrar um novo produto e confirmar mensagem de sucesso', async ({ page }) => {
+    test.skip(!TEST_EMAIL || !TEST_PASSWORD, 'TEST_USER_EMAIL e TEST_USER_PASSWORD devem ser fornecidas via variáveis de ambiente')
     // 1. Acesso à página de autenticação
     console.log('1. Acessando tela de login (/auth/login)...')
     await page.goto('/auth/login')

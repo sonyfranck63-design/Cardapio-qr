@@ -13,12 +13,20 @@ import { slugify } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
 import { revalidateMenuAction } from '@/app/actions/revalidate'
 
+import { RESERVED_SLUGS } from '@/lib/plans'
+import { compressImage } from '@/lib/image-compress'
+
 const restaurantSchema = z.object({
   name: z.string().min(2, 'Nome deve ter ao menos 2 caracteres'),
   slug: z
     .string()
-    .min(2, 'Slug deve ter ao menos 2 caracteres')
-    .regex(/^[a-z0-9-]+$/, 'Use apenas letras minúsculas, números e hífens'),
+    .min(3, 'Slug deve ter no mínimo 3 caracteres')
+    .max(50, 'Slug deve ter no máximo 50 caracteres')
+    .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'Use apenas letras minúsculas e números separados por hífen simples')
+    .refine(
+      (slug) => !RESERVED_SLUGS.includes(slug.toLowerCase() as any),
+      'Este slug é reservado pelo sistema e não pode ser utilizado'
+    ),
   whatsapp: z
     .string()
     .optional()
@@ -82,12 +90,12 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
     }
 
     setUploadingLogo(true)
-    const ext = (file.name.split('.').pop() || 'png').toLowerCase().replace(/[^a-z0-9]/g, '')
-    const fileName = `${restaurant.id}/logo.${ext}`
+    const compressed = await compressImage(file, { maxWidth: 800, maxHeight: 800, quality: 0.85 })
+    const fileName = `${restaurant.id}/logo.webp`
 
     const { error: uploadError } = await supabase.storage
       .from('restaurant-assets')
-      .upload(fileName, file, { upsert: true })
+      .upload(fileName, compressed, { upsert: true, contentType: 'image/webp' })
 
     if (uploadError) {
       toast.error('Erro ao fazer upload da logo')
@@ -140,7 +148,7 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
     // Verificar se slug já existe (de outro restaurante)
     const { data: existing } = await supabase
       .from('restaurants')
-      .select('*')
+      .select('id')
       .eq('slug', data.slug)
       .neq('id', restaurant.id)
       .maybeSingle()

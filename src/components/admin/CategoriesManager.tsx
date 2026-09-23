@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import toast from 'react-hot-toast'
-import { Plus, Pencil, Trash2, Loader2, Tag, GripVertical, Check, X } from 'lucide-react'
+import { Plus, Pencil, Trash2, Loader2, Tag, Check, X, ChevronUp, ChevronDown } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Category } from '@/types/database'
 import { useRouter } from 'next/navigation'
@@ -115,6 +115,31 @@ export default function CategoriesManager({ restaurantId, restaurantSlug, initia
     router.refresh()
   }
 
+  async function handleMove(index: number, direction: 'up' | 'down') {
+    const targetIndex = direction === 'up' ? index - 1 : index + 1
+    if (targetIndex < 0 || targetIndex >= categories.length) return
+
+    const newCategories = [...categories]
+    const current = newCategories[index]
+    const target = newCategories[targetIndex]
+
+    newCategories[index] = target
+    newCategories[targetIndex] = current
+
+    setCategories(newCategories)
+
+    try {
+      await Promise.all([
+        supabase.from('categories').update({ order: targetIndex }).eq('id', current.id),
+        supabase.from('categories').update({ order: index }).eq('id', target.id),
+      ])
+      revalidateMenuAction({ slug: restaurantSlug, restaurantId })
+    } catch {
+      toast.error('Erro ao salvar nova ordem')
+      setCategories(categories)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Add form */}
@@ -153,7 +178,27 @@ export default function CategoriesManager({ restaurantId, restaurantSlug, initia
           <ul className="divide-y divide-gray-800">
             {categories.map((cat, idx) => (
               <li key={cat.id} className="flex items-center gap-3 px-5 py-4 hover:bg-white/2 transition-colors group">
-                <GripVertical className="w-4 h-4 text-gray-700 group-hover:text-gray-500 flex-shrink-0 cursor-grab" />
+                {/* Botões de reordenação */}
+                <div className="flex flex-col gap-0.5 flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => handleMove(idx, 'up')}
+                    disabled={idx === 0}
+                    aria-label={`Mover ${cat.name} para cima`}
+                    className="p-1 rounded text-gray-500 hover:text-white hover:bg-white/10 disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-gray-500 transition-colors"
+                  >
+                    <ChevronUp className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleMove(idx, 'down')}
+                    disabled={idx === categories.length - 1}
+                    aria-label={`Mover ${cat.name} para baixo`}
+                    className="p-1 rounded text-gray-500 hover:text-white hover:bg-white/10 disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-gray-500 transition-colors"
+                  >
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  </button>
+                </div>
 
                 <div className="w-7 h-7 bg-brand-500/15 rounded-lg flex items-center justify-center flex-shrink-0">
                   <span className="text-xs font-bold text-brand-400">{idx + 1}</span>

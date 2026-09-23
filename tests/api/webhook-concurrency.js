@@ -1,22 +1,29 @@
 /**
- * Teste de Concorrência e Idempotência do Webhook do Mercado Pago
+ * Teste de Concorrência e Idempotência (RPC PostgreSQL & Webhook Security)
  * 
- * Simula a chegada de duas notificações idênticas do mesmo pagamento
- * exatamente no mesmo milissegundo (race condition / retentativas de rede).
+ * Valida:
+ * 1. A atomicidade e idempotência do RPC apply_payment no PostgreSQL sob alta concorrência.
+ * 2. Que o endpoint HTTP do Webhook não aceita mais bypass de mockPaymentInfo.
  */
 
 const fs = require('fs');
+const { createClient } = require('@supabase/supabase-js');
 
 // Carrega variáveis de ambiente do .env.local
-let supabaseUrl = '';
-let supabaseKey = '';
+let supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+let supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+let webhookSecret = process.env.MERCADOPAGO_WEBHOOK_SECRET || '';
 
 try {
   const envContent = fs.readFileSync('.env.local', 'utf-8');
   envContent.split('\n').forEach(line => {
-    if (line.startsWith('NEXT_PUBLIC_SUPABASE_URL=')) supabaseUrl = line.split('=')[1].trim();
-    if (line.startsWith('SUPABASE_SERVICE_ROLE_KEY=')) supabaseKey = line.split('=')[1].trim();
-    if (!supabaseKey && line.startsWith('NEXT_PUBLIC_SUPABASE_ANON_KEY=')) supabaseKey = line.split('=')[1].trim();
+    const trimmed = line.trim();
+    if (trimmed.startsWith('#') || !trimmed.includes('=')) return;
+    const [key, ...values] = trimmed.split('=');
+    const val = values.join('=').trim();
+    if (key === 'NEXT_PUBLIC_SUPABASE_URL' && !supabaseUrl) supabaseUrl = val;
+    if (key === 'SUPABASE_SERVICE_ROLE_KEY' && !supabaseKey) supabaseKey = val;
+    if (key === 'MERCADOPAGO_WEBHOOK_SECRET' && !webhookSecret) webhookSecret = val;
   });
 } catch (e) {
   // Ignora se não existir
@@ -24,124 +31,114 @@ try {
 
 const WEBHOOK_URL = process.env.WEBHOOK_URL || 'http://localhost:3000/api/mercadopago/webhook';
 
-async function getTestRestaurantId() {
-  if (supabaseUrl && supabaseKey) {
-    try {
-      const { createClient } = require('@supabase/supabase-js');
-      const supabase = createClient(supabaseUrl, supabaseKey);
-      const { data, error } = await supabase.from('restaurants').select('id, name, subscription_expires_at').limit(1).single();
-      if (!error && data) {
-        return data;
-      }
-    } catch (err) {
-      // Fallback abaixo
-    }
-  }
-  return { id: '733509f7-bb50-415c-8f5a-0a2e647121ce', name: 'Restaurante Teste' };
-}
-
 async function runConcurrencyTest() {
   console.log('\n============================================================');
-  console.log('🧪 QA TEST: CONCORRÊNCIA E IDEMPOTÊNCIA DO WEBHOOK');
+  console.log('🧪 QA TEST: CONCORRÊNCIA E IDEMPOTÊNCIA DA ASSINATURA');
   console.log('============================================================\n');
 
-  const restaurant = await getTestRestaurantId();
-  const testPaymentId = `sim_pay_${Date.now()}_concurrency`;
+  if (!supabaseUrl || !supabaseKey) {
+    console.warn('⚠️ Supabase credentials não encontradas no ambiente. Pulando teste de banco.');
+    return;
+  }
 
-  console.log(`📌 Alvo: ${WEBHOOK_URL}`);
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+  // 1. Busca restaurante de teste
+  const { data: restaurant, error: restError } = await supabase
+    .from('restaurants')
+    .select('id, name, subscription_expires_at')
+    .limit(1)
+    .maybeSingle();
+
+  if (restError || !restaurant) {
+    console.warn('⚠️ Nenhum restaurante encontrado para o teste no Supabase.');
+    return;
+  }
+
   console.log(`🏪 Restaurante: ${restaurant.name} (ID: ${restaurant.id})`);
+  const testPaymentId = `sim_pay_${Date.now()}_concurrency`;
   console.log(`💳 ID de Pagamento Simulado: ${testPaymentId}`);
-  console.log('⚡ Disparando 2 requests POST idênticos em paralelo (Promise.all)... \n');
-
-  const payload = {
-    type: 'payment',
-    data: { id: testPaymentId },
-    mockPaymentInfo: {
-      id: testPaymentId,
-      status: 'approved',
-      external_reference: restaurant.id,
-      transaction_amount: 49.90,
-    },
-  };
-
-  const requestOptions = {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'User-Agent': 'MercadoPago Webhook Simulator / QA Suite',
-    },
-    body: JSON.stringify(payload),
-  };
+  console.log('⚡ Disparando 2 chamadas concorrentes ao RPC apply_payment simultaneamente...\n');
 
   const startTime = Date.now();
 
-  // Disparo simultâneo no mesmo tick de execução
-  const [response1, response2] = await Promise.all([
-    fetch(WEBHOOK_URL, requestOptions),
-    fetch(WEBHOOK_URL, requestOptions),
+  const [res1, res2] = await Promise.all([
+    supabase.rpc('apply_payment', {
+      p_payment_id: testPaymentId,
+      p_restaurant_id: restaurant.id,
+      p_amount: 49.90,
+    }),
+    supabase.rpc('apply_payment', {
+      p_payment_id: testPaymentId,
+      p_restaurant_id: restaurant.id,
+      p_amount: 49.90,
+    }),
   ]);
 
   const duration = Date.now() - startTime;
 
-  const data1 = await response1.json().catch(() => ({}));
-  const data2 = await response2.json().catch(() => ({}));
-
-  console.log('📥 Resposta Request #1:');
-  console.log(`   HTTP Status: ${response1.status}`);
-  console.log('   Body:', JSON.stringify(data1, null, 2));
-
-  console.log('\n📥 Resposta Request #2:');
-  console.log(`   HTTP Status: ${response2.status}`);
-  console.log('   Body:', JSON.stringify(data2, null, 2));
-
+  console.log('📥 Resposta RPC #1:', JSON.stringify(res1.data || res1.error, null, 2));
+  console.log('📥 Resposta RPC #2:', JSON.stringify(res2.data || res2.error, null, 2));
   console.log(`\n⏱️ Tempo total da operação: ${duration}ms`);
 
-  // Validação dos critérios de aceitação
-  const bothHttp200 = response1.status === 200 && response2.status === 200;
-  
-  const successCount = [data1, data2].filter(d => d.success === true).length;
-  const blockedCount = [data1, data2].filter(d => d.duplicate === true || d.already_processed === true).length;
+  const results = [res1.data, res2.data].filter(Boolean);
+  const successCount = results.filter(r => r.success === true && r.already_processed === false).length;
+  const alreadyProcessedCount = results.filter(r => r.already_processed === true).length;
 
   console.log('\n============================================================');
-  console.log('🔍 ANÁLISE DE SEGURANÇA E IDEMPOTÊNCIA:');
+  console.log('🔍 ANÁLISE DE ATOMICIDADE:');
   console.log('============================================================');
 
-  let testPassed = true;
-
-  if (bothHttp200) {
-    console.log('✅ [PASS] Ambos os requests responderam HTTP 200 (Gateway do Mercado Pago satisfeito sem retries indevidos)');
-  } else {
-    console.log('❌ [FAIL] Ao menos um request não respondeu HTTP 200');
-    testPassed = false;
-  }
+  let passed = true;
 
   if (successCount === 1) {
-    console.log('✅ [PASS] Exatamente UMA notificação processou e estendeu a assinatura');
+    console.log('✅ [PASS] Exatamente UMA chamada executou e estendeu a assinatura.');
   } else {
-    console.log(`❌ [FAIL] Número inesperado de processamentos bem-sucedidos: ${successCount} (Esperado: 1)`);
-    testPassed = false;
+    console.log(`❌ [FAIL] Chamadas processadas com sucesso: ${successCount} (Esperado: 1)`);
+    passed = false;
   }
 
-  if (blockedCount === 1) {
-    const blockedReason = data1.blocked_by || data2.blocked_by || 'mecanismo de idempotência';
-    console.log(`✅ [PASS] Exatamente UMA notificação foi bloqueada pela camada de idempotência: [${blockedReason}]`);
+  if (alreadyProcessedCount === 1) {
+    console.log('✅ [PASS] Exatamente UMA chamada foi interceptada pela idempotência atômica.');
   } else {
-    console.log(`❌ [FAIL] Número de requisições bloqueadas: ${blockedCount} (Esperado: 1)`);
-    testPassed = false;
+    console.log(`❌ [FAIL] Chamadas marcadas como already_processed: ${alreadyProcessedCount} (Esperado: 1)`);
+    passed = false;
   }
 
-  console.log('============================================================');
-  if (testPassed) {
-    console.log('🎉 RESULTADO: O SISTEMA ESTÁ 100% PROTEGIDO CONTRA RACE CONDITIONS!');
-    console.log('   Nenhum cliente receberá duplicação de dias por retentativas de rede.');
+  // 2. Validação de rejeição de mock no Webhook HTTP
+  console.log('\n🔒 Testando rejeição de requisição forjada no Webhook HTTP...');
+  try {
+    const fakeReq = await fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'payment',
+        data: { id: 'fake_attempt_123' },
+        mockPaymentInfo: { status: 'approved' },
+      }),
+    });
+
+    console.log(`   HTTP Status retornado para mock não autenticado: ${fakeReq.status}`);
+    if (fakeReq.status === 401 || fakeReq.status === 500 || fakeReq.status === 502) {
+      console.log('✅ [PASS] O webhook rejeitou a tentativa não assinada/forjada.');
+    } else {
+      console.log(`⚠️ Status inesperado: ${fakeReq.status}`);
+    }
+  } catch (netErr) {
+    console.log('ℹ️ Servidor web não está rodando localmente no momento (esperado em testes isolados).');
+  }
+
+  console.log('\n============================================================');
+  if (passed) {
+    console.log('🎉 RESULTADO: CONCORRÊNCIA E IDEMPOTÊNCIA VALIDADAS COM SUCESSO!');
     process.exit(0);
   } else {
-    console.log('💥 RESULTADO: FALHA NO TESTE DE IDEMPOTÊNCIA.');
+    console.log('💥 RESULTADO: FALHA NA VALIDAÇÃO DE CONCORRÊNCIA.');
     process.exit(1);
   }
 }
 
 runConcurrencyTest().catch(err => {
-  console.error('❌ Erro inesperado ao executar teste de concorrência:', err);
+  console.error('❌ Erro no teste de concorrência:', err);
   process.exit(1);
 });

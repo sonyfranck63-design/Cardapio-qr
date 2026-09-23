@@ -22,6 +22,7 @@ import {
   Layers
 } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { PLAN_PRICE } from '@/lib/plans'
 
 export default function SuperAdminPage() {
   const [restaurants, setRestaurants] = useState<Restaurant[]>([])
@@ -121,7 +122,7 @@ export default function SuperAdminPage() {
   const activeCount = enrichedRestaurants.filter(r => r.isActive).length
   const trialCount = enrichedRestaurants.filter(r => r.isTrial).length
   const expiredCount = enrichedRestaurants.filter(r => r.isExpired).length
-  const monthlyRevenue = activeCount * 49.90
+  const monthlyRevenue = activeCount * PLAN_PRICE
 
   // Filtros
   const filteredRestaurants = enrichedRestaurants.filter(r => {
