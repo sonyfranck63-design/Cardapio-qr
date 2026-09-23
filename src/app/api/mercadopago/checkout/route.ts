@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { preferenceClient } from '@/lib/mercadopago'
 
+const checkoutRateLimit = new Map<string, number>()
+const RATE_LIMIT_MS = 15_000 // 15 segundos entre tentativas por restaurante
+
 export async function POST(req: Request) {
   try {
     const supabase = createClient()
@@ -20,6 +23,15 @@ export async function POST(req: Request) {
     if (!restaurant) {
       return NextResponse.json({ error: 'Restaurante não encontrado' }, { status: 404 })
     }
+
+    const lastCall = checkoutRateLimit.get(restaurant.id)
+    if (lastCall && Date.now() - lastCall < RATE_LIMIT_MS) {
+      return NextResponse.json(
+        { error: 'Aguarde alguns segundos antes de tentar novamente.' },
+        { status: 429 }
+      )
+    }
+    checkoutRateLimit.set(restaurant.id, Date.now())
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
     const hasToken = process.env.MERCADOPAGO_ACCESS_TOKEN && !process.env.MERCADOPAGO_ACCESS_TOKEN.startsWith('TEST-00000000')

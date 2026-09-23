@@ -145,7 +145,7 @@ export default function RegisterPage() {
                     <p className="mt-1.5 text-xs text-red-400">{errors.restaurantName.message}</p>
                   ) : restaurantNameValue.length >= 2 ? (
                     <p className="mt-1.5 text-xs text-gray-500">
-                      Seu link: <span className="text-brand-400">cardapio.com/{slugify(restaurantNameValue)}</span>
+                      Seu link: <span className="text-brand-400">{process.env.NEXT_PUBLIC_APP_URL?.replace('https://', '').replace('http://', '') || 'seudominio.com'}/{slugify(restaurantNameValue)}</span>
                     </p>
                   ) : null}
                 </div>
