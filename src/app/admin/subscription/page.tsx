@@ -106,12 +106,12 @@ function SubscriptionContent() {
 
       const data = await res.json()
 
-      if (!res.ok || !data.init_point) {
+      if (!res.ok || !data.url) {
         toast.error(data.error || 'Erro ao iniciar pagamento')
         return
       }
 
-      window.location.href = data.init_point
+      window.location.href = data.url
     } catch {
       toast.error('Erro de conexão ao iniciar pagamento')
     } finally {

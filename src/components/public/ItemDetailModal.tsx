@@ -21,6 +21,11 @@ export default function ItemDetailModal({
 }: ItemDetailModalProps) {
   const modalRef = useRef<HTMLDivElement>(null)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
+  const [imageError, setImageError] = useState(false)
+
+  useEffect(() => {
+    setImageError(false)
+  }, [item?.id])
 
   // Acessibilidade: Fechar no Escape e prender foco (Focus Trap)
   useEffect(() => {
@@ -114,7 +119,7 @@ export default function ItemDetailModal({
         </button>
 
         {/* Imagem em Destaque */}
-        {hasImage ? (
+        {hasImage && !imageError ? (
           <div className="relative w-full h-64 sm:h-72 bg-stone-200 shrink-0">
             <Image
               src={item.image_url!}
@@ -124,6 +129,7 @@ export default function ItemDetailModal({
               className={`object-cover ${isSoldOut ? 'grayscale opacity-75' : ''}`}
               priority
               unoptimized
+              onError={() => setImageError(true)}
             />
             {isSoldOut && (
               <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
