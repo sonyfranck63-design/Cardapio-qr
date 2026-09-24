@@ -64,11 +64,21 @@ export default async function AdminLayout({
     redirect('/auth/login')
   }
 
+  const isEmailPending = restaurant.subscription_status === 'pending_verification' || !user.email_confirmed_at
+
   return (
     <div className="min-h-screen bg-[#faf8f5] text-stone-900 flex font-sans selection:bg-orange-100 selection:text-orange-950">
       <AdminSidebar restaurant={restaurant} />
-      <main className="flex-1 lg:ml-64 min-h-screen">
-        <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+      <main className="flex-1 lg:ml-64 min-h-screen flex flex-col">
+        {isEmailPending && (
+          <div className="bg-amber-50 border-b border-amber-200 px-4 sm:px-8 py-3 text-amber-950 text-xs sm:text-sm flex items-center gap-2.5">
+            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0" />
+            <span>
+              <strong>Confirmação de e-mail necessária:</strong> Enviamos um link para <strong>{user.email}</strong>. Confirme seu e-mail para desbloquear seus 7 dias gratuitos de degustação.
+            </span>
+          </div>
+        )}
+        <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full flex-1">
           {children}
         </div>
       </main>

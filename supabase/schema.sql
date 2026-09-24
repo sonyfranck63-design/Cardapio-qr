@@ -297,7 +297,50 @@ USING (
 CREATE EXTENSION IF NOT EXISTS unaccent;
 
 -- ============================================================
--- TRIGGER: Criação Automática do Restaurante
+-- ============================================================
+-- TABELA: trial_history (Anti-abuso de degustação por e-mail normalizado)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS public.trial_history (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  normalized_email TEXT NOT NULL UNIQUE,
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  granted_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE public.trial_history ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.trial_history FROM anon, authenticated;
+
+-- FUNÇÃO: normalize_email
+CREATE OR REPLACE FUNCTION public.normalize_email(raw_email text)
+RETURNS text AS $$
+DECLARE
+  clean_email text;
+  local_part text;
+  domain_part text;
+BEGIN
+  IF raw_email IS NULL OR trim(raw_email) = '' THEN
+    RETURN '';
+  END IF;
+
+  clean_email := lower(trim(raw_email));
+  local_part := split_part(clean_email, '@', 1);
+  domain_part := split_part(clean_email, '@', 2);
+
+  IF domain_part = 'googlemail.com' THEN
+    domain_part := 'gmail.com';
+  END IF;
+
+  local_part := split_part(local_part, '+', 1);
+
+  IF domain_part = 'gmail.com' THEN
+    local_part := replace(local_part, '.', '');
+  END IF;
+
+  RETURN local_part || '@' || domain_part;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+-- TRIGGER: Criação Automática do Restaurante com Anti-Abuso
 -- ============================================================
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
@@ -305,19 +348,46 @@ DECLARE
   restaurant_name TEXT;
   restaurant_slug TEXT;
   base_slug TEXT;
+  norm_email TEXT;
+  trial_already_granted BOOLEAN;
+  initial_status TEXT;
+  initial_expires_at TIMESTAMPTZ;
 BEGIN
   restaurant_name := COALESCE(new.raw_user_meta_data->>'restaurant_name', 'Meu Restaurante');
-  
+  norm_email := public.normalize_email(new.email);
+
   -- Remove acentos via unaccent, converte para minúsculas e substitui caracteres não-alfanuméricos
   base_slug := lower(unaccent(restaurant_name));
   base_slug := regexp_replace(base_slug, '[^a-z0-9]+', '-', 'g');
   base_slug := trim(both '-' from base_slug);
-  
+
   IF base_slug = '' THEN
     base_slug := 'restaurante';
   END IF;
-  
+
   restaurant_slug := base_slug || '-' || substr(md5(random()::text), 1, 6);
+
+  -- Verifica se o e-mail já foi confirmado no momento do registro
+  IF new.email_confirmed_at IS NOT NULL THEN
+    SELECT EXISTS (
+      SELECT 1 FROM public.trial_history WHERE normalized_email = norm_email
+    ) INTO trial_already_granted;
+
+    IF trial_already_granted THEN
+      initial_status := 'expired';
+      initial_expires_at := NOW();
+    ELSE
+      initial_status := 'trial';
+      initial_expires_at := NOW() + INTERVAL '7 days';
+
+      INSERT INTO public.trial_history (normalized_email, user_id)
+      VALUES (norm_email, new.id)
+      ON CONFLICT (normalized_email) DO NOTHING;
+    END IF;
+  ELSE
+    initial_status := 'pending_verification';
+    initial_expires_at := NOW();
+  END IF;
 
   INSERT INTO public.restaurants (
     user_id,
@@ -331,9 +401,9 @@ BEGIN
     new.id,
     restaurant_name,
     restaurant_slug,
-    'trial',
+    initial_status,
     'mensal',
-    NOW() + INTERVAL '7 days'
+    initial_expires_at
   );
 
   RETURN new;
@@ -344,6 +414,49 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- TRIGGER: Ativação de Trial após Confirmação de E-mail
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.handle_user_email_confirmed()
+RETURNS trigger AS $$
+DECLARE
+  norm_email TEXT;
+  trial_already_granted BOOLEAN;
+BEGIN
+  IF old.email_confirmed_at IS NULL AND new.email_confirmed_at IS NOT NULL THEN
+    norm_email := public.normalize_email(new.email);
+
+    SELECT EXISTS (
+      SELECT 1 FROM public.trial_history WHERE normalized_email = norm_email
+    ) INTO trial_already_granted;
+
+    IF trial_already_granted THEN
+      UPDATE public.restaurants
+      SET
+        subscription_status = 'expired',
+        subscription_expires_at = NOW()
+      WHERE user_id = new.id AND subscription_status = 'pending_verification';
+    ELSE
+      INSERT INTO public.trial_history (normalized_email, user_id)
+      VALUES (norm_email, new.id)
+      ON CONFLICT (normalized_email) DO NOTHING;
+
+      UPDATE public.restaurants
+      SET
+        subscription_status = 'trial',
+        subscription_expires_at = NOW() + INTERVAL '7 days'
+      WHERE user_id = new.id AND subscription_status = 'pending_verification';
+    END IF;
+  END IF;
+
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_auth_user_email_confirmed ON auth.users;
+CREATE TRIGGER on_auth_user_email_confirmed
+  AFTER UPDATE OF email_confirmed_at ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_user_email_confirmed();
 
 -- ============================================================
 -- PERMISSÕES DE COLUNAS (Column-Level Security)
