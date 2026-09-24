@@ -189,6 +189,17 @@ export default function RegisterPage() {
                   )}
                 </div>
 
+                <p className="text-[11px] text-stone-500 text-center px-2">
+                  Ao criar sua conta, você concorda com nossos{' '}
+                  <Link href="/termos" className="text-stone-700 underline hover:text-stone-950">
+                    Termos de Uso
+                  </Link>{' '}
+                  e{' '}
+                  <Link href="/privacidade" className="text-stone-700 underline hover:text-stone-950">
+                    Política de Privacidade
+                  </Link>.
+                </p>
+
                 <button
                   type="submit"
                   disabled={isSubmitting}
@@ -213,6 +224,22 @@ export default function RegisterPage() {
               </p>
             </>
           )}
+        </div>
+
+        {/* Rodapé Institucional e Legal */}
+        <div className="mt-8 text-center text-xs text-stone-400 space-y-2">
+          <div className="flex items-center justify-center gap-4">
+            <Link href="/termos" className="hover:text-stone-600 transition-colors underline">
+              Termos de Uso
+            </Link>
+            <span>•</span>
+            <Link href="/privacidade" className="hover:text-stone-600 transition-colors underline">
+              Política de Privacidade
+            </Link>
+          </div>
+          <p className="text-[11px] text-stone-400">
+            CardápioQR Tecnologia • Plataforma segura com criptografia ponta a ponta
+          </p>
         </div>
       </div>
     </div>

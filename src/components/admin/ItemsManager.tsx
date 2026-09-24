@@ -123,12 +123,12 @@ export default function ItemsManager({ restaurantId, restaurantSlug, categories,
   return (
     <div className="space-y-6">
       {/* Toolbar */}
-      <div className="flex flex-col sm:flex-row gap-3 justify-between">
-        {/* Category filter */}
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
+      <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
+        {/* Category filter tabs */}
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none no-scrollbar -mx-1 px-1">
           <button
             onClick={() => setFilterCategory('all')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all ${
+            className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all shrink-0 ${
               filterCategory === 'all'
                 ? 'bg-stone-900 text-white shadow-xs'
                 : 'bg-white border border-stone-200 text-stone-700 hover:bg-stone-100'
@@ -142,7 +142,7 @@ export default function ItemsManager({ restaurantId, restaurantSlug, categories,
               <button
                 key={cat.id}
                 onClick={() => setFilterCategory(cat.id)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all ${
+                className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all shrink-0 ${
                   filterCategory === cat.id
                     ? 'bg-stone-900 text-white shadow-xs'
                     : 'bg-white border border-stone-200 text-stone-700 hover:bg-stone-100'
@@ -156,10 +156,10 @@ export default function ItemsManager({ restaurantId, restaurantSlug, categories,
 
         <button
           onClick={() => { setEditingItem(null); setShowModal(true) }}
-          className="btn-primary shrink-0"
+          className="btn-primary shrink-0 w-full sm:w-auto justify-center"
         >
           <Plus className="w-4 h-4" />
-          Novo prato
+          <span>Novo prato</span>
         </button>
       </div>
 
