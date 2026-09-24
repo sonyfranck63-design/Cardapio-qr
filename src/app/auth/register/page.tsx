@@ -48,7 +48,20 @@ export default function RegisterPage() {
     })
 
     if (authError) {
-      toast.error(authError.message || 'Erro ao criar conta')
+      let friendlyMessage = 'Erro ao criar conta. Tente novamente.'
+      const raw = (authError.message || '').toLowerCase()
+
+      if (raw.includes('already registered') || raw.includes('user already exists')) {
+        friendlyMessage = 'Este e-mail já está cadastrado. Faça login na sua conta.'
+      } else if (raw.includes('rate limit') || raw.includes('over_email_send_rate_limit')) {
+        friendlyMessage = 'Muitas tentativas em pouco tempo. Aguarde alguns minutos antes de tentar novamente.'
+      } else if (raw.includes('password') && raw.includes('least 6')) {
+        friendlyMessage = 'A senha precisa ter pelo menos 6 caracteres.'
+      } else if (raw.includes('database error')) {
+        friendlyMessage = 'Erro de conexão com o banco de dados. Por favor, tente novamente em instantes.'
+      }
+
+      toast.error(friendlyMessage)
       return
     }
 
