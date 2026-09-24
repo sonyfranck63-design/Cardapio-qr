@@ -196,9 +196,12 @@ export default function ItemFormModal({
           <div className="p-5 space-y-4">
             {/* Upload de Imagem */}
             <div>
-              <label className="input-label">Fotografia do prato (Opcional)</label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="input-label mb-0">Foto do item (Opcional)</label>
+                <span className="text-[11px] text-stone-400">Pratos ou Bebidas</span>
+              </div>
               <div
-                className="relative w-full h-40 bg-stone-50 border-2 border-dashed border-stone-300 rounded-xl flex items-center justify-center cursor-pointer hover:border-orange-500 hover:bg-orange-50/20 transition-all overflow-hidden"
+                className="relative w-full h-48 bg-stone-50 border-2 border-dashed border-stone-300 rounded-2xl flex items-center justify-center cursor-pointer hover:border-orange-500 hover:bg-orange-50/20 transition-all overflow-hidden"
                 onClick={() => fileInputRef.current?.click()}
               >
                 {uploadingImage ? (
@@ -207,17 +210,38 @@ export default function ItemFormModal({
                     <span className="text-xs font-semibold">Otimizando e enviando foto...</span>
                   </div>
                 ) : imageUrl ? (
-                  <>
-                    <Image src={imageUrl} alt="Preview" fill className="object-cover" unoptimized />
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                      <Upload className="w-8 h-8 text-white" />
+                  <div className="relative w-full h-full flex items-center justify-center bg-stone-900/5">
+                    {/* Fundo suave para não deixar bordas secas em fotos verticais */}
+                    <Image
+                      src={imageUrl}
+                      alt=""
+                      fill
+                      className="object-cover blur-md opacity-20 pointer-events-none"
+                      aria-hidden="true"
+                      unoptimized
+                    />
+                    {/* Imagem inteira com object-contain (mostra garrafas, latas e pratos completos) */}
+                    <Image
+                      src={imageUrl}
+                      alt="Preview do item"
+                      fill
+                      className="object-contain p-2 z-10"
+                      unoptimized
+                    />
+                    <div className="absolute inset-0 bg-black/40 z-20 flex flex-col items-center justify-center opacity-0 hover:opacity-100 transition-opacity gap-1 text-white">
+                      <Upload className="w-6 h-6" />
+                      <span className="text-xs font-semibold">Clique para trocar a foto</span>
                     </div>
-                  </>
+                  </div>
                 ) : (
                   <div className="flex flex-col items-center gap-1.5 text-stone-400 p-4 text-center">
-                    <ImageIcon className="w-8 h-8 text-stone-400" />
+                    <div className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center text-stone-500 mb-1">
+                      <ImageIcon className="w-5 h-5" />
+                    </div>
                     <span className="text-xs font-bold text-stone-700">Clique para adicionar uma foto</span>
-                    <span className="text-[11px] text-stone-400">JPG, PNG ou WebP — Pratos sem foto usam o estilo clássico pontilhado</span>
+                    <span className="text-[11px] text-stone-400 max-w-xs">
+                      Enquadramento inteligente: garrafas, latas e pratos inteiros sem cortes
+                    </span>
                   </div>
                 )}
               </div>
@@ -229,13 +253,16 @@ export default function ItemFormModal({
                 className="hidden"
               />
               {imageUrl && (
-                <button
-                  type="button"
-                  onClick={() => setImageUrl(null)}
-                  className="text-xs text-red-600 hover:text-red-800 mt-1.5 flex items-center gap-1 font-medium transition-colors"
-                >
-                  <X className="w-3.5 h-3.5" /> Remover foto
-                </button>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-[11px] text-stone-500">Foto inteira preservada</span>
+                  <button
+                    type="button"
+                    onClick={() => setImageUrl(null)}
+                    className="text-xs text-red-600 hover:text-red-800 flex items-center gap-1 font-medium transition-colors"
+                  >
+                    <X className="w-3.5 h-3.5" /> Remover foto
+                  </button>
+                </div>
               )}
             </div>
 

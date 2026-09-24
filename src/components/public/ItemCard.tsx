@@ -88,14 +88,14 @@ export default function ItemCard({ item, whatsappNumber }: ItemCardProps) {
           isSoldOut ? 'opacity-60 cursor-not-allowed' : ''
         }`}
       >
-        {/* Imagem do Prato */}
-        <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-xl bg-stone-100 shrink-0 overflow-hidden border border-stone-200">
+        {/* Imagem do Prato / Bebida */}
+        <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-xl bg-stone-50 shrink-0 overflow-hidden border border-stone-200 flex items-center justify-center">
           <Image
             src={item.image_url!}
             alt={item.name}
             fill
             sizes="112px"
-            className={`object-cover transition-transform duration-300 group-hover:scale-105 ${
+            className={`object-contain p-1.5 transition-transform duration-300 group-hover:scale-105 ${
               isSoldOut ? 'grayscale' : ''
             }`}
             unoptimized
