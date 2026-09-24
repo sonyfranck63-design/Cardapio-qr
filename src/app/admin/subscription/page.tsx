@@ -218,7 +218,7 @@ function SubscriptionContent() {
           <button
             onClick={handleCheckout}
             disabled={processingPayment}
-            className="btn-primary py-3 px-6 text-sm sm:text-base font-semibold flex items-center justify-center gap-2 shrink-0"
+            className="btn-primary w-full sm:w-auto py-3 px-6 text-sm sm:text-base font-semibold flex items-center justify-center gap-2 shrink-0"
           >
             {processingPayment ? (
               <RefreshCw className="w-4 h-4 animate-spin" />

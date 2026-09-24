@@ -684,12 +684,12 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
               onChange={(e) => setDeleteConfirmText(e.target.value)}
               className="input-field text-sm border-red-300 focus:border-red-600"
             />
-            <div className="flex items-center gap-3 pt-1">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-1">
               <button
                 type="button"
                 disabled={deleteConfirmText !== 'EXCLUIR' || isDeletingAccount}
                 onClick={handleDeleteAccount}
-                className="px-4 py-2 bg-red-700 hover:bg-red-800 disabled:opacity-50 text-white font-bold text-xs rounded-xl transition-all flex items-center gap-2"
+                className="px-4 py-2.5 bg-red-700 hover:bg-red-800 disabled:opacity-50 text-white font-bold text-xs rounded-xl transition-all flex items-center justify-center gap-2"
               >
                 {isDeletingAccount ? (
                   <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Excluindo...</>
@@ -704,7 +704,7 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
                   setShowDeleteConfirm(false)
                   setDeleteConfirmText('')
                 }}
-                className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-medium rounded-xl transition-all"
+                className="px-4 py-2.5 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-medium rounded-xl transition-all flex items-center justify-center"
               >
                 Cancelar
               </button>

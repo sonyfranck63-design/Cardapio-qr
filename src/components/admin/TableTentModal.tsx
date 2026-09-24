@@ -37,25 +37,25 @@ export default function TableTentModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm print:p-0 print:bg-white print:static"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 pt-16 sm:pt-4 bg-black/80 backdrop-blur-sm print:p-0 print:bg-white print:static overflow-y-auto"
       role="dialog"
       aria-modal="true"
     >
       {/* Botões de ação no topo (ocultos na impressão) */}
-      <div className="absolute top-4 right-4 flex items-center gap-3 print:hidden z-20">
+      <div className="fixed top-0 inset-x-0 p-3 sm:p-4 flex items-center justify-between sm:justify-end gap-2.5 sm:gap-3 print:hidden z-20 bg-stone-950/80 sm:bg-transparent backdrop-blur-sm sm:backdrop-blur-none border-b border-white/10 sm:border-none">
         <button
           onClick={handlePrint}
-          className="btn-primary py-2 px-4 shadow-lg flex items-center gap-2 text-sm font-semibold"
+          className="btn-primary py-2 px-3 sm:px-4 shadow-lg flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-semibold"
         >
-          <Printer className="w-4 h-4" />
-          Imprimir / Salvar PDF
+          <Printer className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+          <span>Imprimir / PDF</span>
         </button>
         <button
           onClick={onClose}
           aria-label="Fechar prévia"
-          className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+          className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center transition-colors shrink-0"
         >
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
       </div>
 

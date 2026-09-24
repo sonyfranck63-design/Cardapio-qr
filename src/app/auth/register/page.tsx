@@ -83,19 +83,19 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#faf8f5] text-stone-900 flex items-center justify-center px-4 py-12 font-sans selection:bg-orange-100 selection:text-orange-950">
+    <div className="min-h-screen bg-[#faf8f5] text-stone-900 flex items-center justify-center px-4 py-8 sm:py-12 font-sans selection:bg-orange-100 selection:text-orange-950">
       <div className="w-full max-w-md animate-slide-up">
         {/* Topo / Voltar */}
         <div className="text-center mb-6">
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-stone-500 hover:text-stone-900 transition-colors text-xs font-semibold mb-6"
+            className="inline-flex items-center gap-1.5 text-stone-500 hover:text-stone-900 transition-colors text-xs font-semibold mb-5"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             Voltar ao início
           </Link>
           <div className="flex items-center justify-center gap-2 mb-2">
-            <div className="w-9 h-9 bg-stone-900 rounded-xl flex items-center justify-center text-white shadow-sm">
+            <div className="w-9 h-9 bg-stone-900 rounded-xl flex items-center justify-center text-white shadow-sm shrink-0">
               <QrCode className="w-5 h-5" />
             </div>
             <span className="text-2xl font-extrabold tracking-tight text-stone-950">CardápioQR</span>
@@ -103,15 +103,15 @@ export default function RegisterPage() {
           <p className="text-xs sm:text-sm text-stone-500">Crie seu cardápio digital em minutos</p>
         </div>
 
-        <div className="bg-white border border-stone-200/90 rounded-3xl p-7 sm:p-9 shadow-sm">
+        <div className="bg-white border border-stone-200/90 rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-sm">
           {emailSent ? (
             <div className="text-center py-2 space-y-4">
-              <div className="w-14 h-14 bg-orange-100 text-orange-800 rounded-2xl flex items-center justify-center mx-auto border border-orange-200">
+              <div className="w-14 h-14 bg-orange-100 text-orange-800 rounded-2xl flex items-center justify-center mx-auto border border-orange-200 shrink-0">
                 <Mail className="w-7 h-7" />
               </div>
               <h2 className="text-xl font-bold text-stone-900">Confirme seu e-mail</h2>
-              <p className="text-stone-600 text-sm leading-relaxed">
-                Enviamos o link de confirmação para <strong className="text-stone-950">{emailSent}</strong>.
+              <p className="text-stone-600 text-sm leading-relaxed px-1">
+                Enviamos o link de confirmação para <strong className="text-stone-950 break-all">{emailSent}</strong>.
               </p>
               <div className="p-4 bg-stone-50 border border-stone-200 rounded-xl text-left text-xs text-stone-600 space-y-2">
                 <div className="flex items-start gap-2">
@@ -127,7 +127,7 @@ export default function RegisterPage() {
               <div className="pt-2">
                 <Link
                   href="/auth/login"
-                  className="btn-primary w-full justify-center py-2.5 text-sm"
+                  className="btn-primary w-full justify-center py-3 text-sm"
                 >
                   Ir para o Login
                 </Link>
@@ -135,9 +135,9 @@ export default function RegisterPage() {
             </div>
           ) : (
             <>
-              <div className="flex items-center justify-between mb-5">
-                <h1 className="text-xl font-bold text-stone-900 tracking-tight">Criar minha conta</h1>
-                <span className="text-[11px] bg-orange-100 text-orange-800 border border-orange-200/80 px-2.5 py-0.5 rounded-full font-bold">
+              <div className="flex items-center justify-between mb-5 gap-2">
+                <h1 className="text-lg sm:text-xl font-bold text-stone-900 tracking-tight">Criar minha conta</h1>
+                <span className="text-[11px] bg-orange-100 text-orange-800 border border-orange-200/80 px-2.5 py-0.5 rounded-full font-bold shrink-0">
                   7 dias grátis
                 </span>
               </div>
@@ -155,10 +155,13 @@ export default function RegisterPage() {
                   {errors.restaurantName ? (
                     <p className="mt-1.5 text-xs text-red-600 font-medium">{errors.restaurantName.message}</p>
                   ) : restaurantNameValue.length >= 2 ? (
-                    <p className="mt-1.5 text-xs text-stone-500">
-                      Link inicial: <span className="text-orange-700 font-mono font-medium">{process.env.NEXT_PUBLIC_APP_URL?.replace('https://', '').replace('http://', '') || 'cardapioqr.com'}/{slugify(restaurantNameValue)}-[código]</span>
-                      <span className="block text-[11px] text-stone-400 mt-0.5">Você poderá personalizar o link nas configurações do painel.</span>
-                    </p>
+                    <div className="mt-2 p-2.5 rounded-xl bg-orange-50/60 border border-orange-100 text-xs text-stone-600">
+                      <span className="text-[11px] text-stone-500 block mb-0.5">Seu link público será:</span>
+                      <span className="text-orange-800 font-mono font-semibold break-all text-xs block">
+                        {process.env.NEXT_PUBLIC_APP_URL?.replace('https://', '').replace('http://', '') || 'cardapioqr.com'}/{slugify(restaurantNameValue)}-[código]
+                      </span>
+                      <span className="block text-[10px] text-stone-400 mt-1">Você poderá personalizar o link depois nas configurações.</span>
+                    </div>
                   ) : null}
                 </div>
 

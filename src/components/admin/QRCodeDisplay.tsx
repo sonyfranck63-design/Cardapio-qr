@@ -127,20 +127,20 @@ export default function QRCodeDisplay({ url, restaurantName }: QRCodeDisplayProp
         <div className="grid grid-cols-2 gap-2">
           <button
             onClick={handleDownloadPNG}
-            className="px-3 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200/80 border border-stone-200 text-xs font-semibold text-stone-700 flex items-center justify-center gap-1.5 transition-colors"
+            className="px-2.5 sm:px-3 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200/80 border border-stone-200 text-xs font-semibold text-stone-700 flex items-center justify-center gap-1.5 transition-colors text-center"
             title="Download PNG em Alta Resolução (1200x1200px)"
           >
-            <ImageIcon className="w-3.5 h-3.5 text-brand-600" />
-            PNG Alta Res (1200px)
+            <ImageIcon className="w-3.5 h-3.5 text-orange-700 shrink-0" />
+            <span className="truncate">PNG (1200px)</span>
           </button>
 
           <button
             onClick={handleDownloadSVG}
-            className="px-3 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200/80 border border-stone-200 text-xs font-semibold text-stone-700 flex items-center justify-center gap-1.5 transition-colors"
+            className="px-2.5 sm:px-3 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200/80 border border-stone-200 text-xs font-semibold text-stone-700 flex items-center justify-center gap-1.5 transition-colors text-center"
             title="Download Vetorial SVG"
           >
-            <FileCode className="w-3.5 h-3.5 text-emerald-600" />
-            SVG Vetorial
+            <FileCode className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+            <span className="truncate">SVG Vetor</span>
           </button>
         </div>
       </div>

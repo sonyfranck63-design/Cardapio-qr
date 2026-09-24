@@ -47,19 +47,19 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#faf8f5] text-stone-900 flex items-center justify-center px-4 py-12 font-sans selection:bg-orange-100 selection:text-orange-950">
+    <div className="min-h-screen bg-[#faf8f5] text-stone-900 flex items-center justify-center px-4 py-8 sm:py-12 font-sans selection:bg-orange-100 selection:text-orange-950">
       <div className="w-full max-w-md animate-slide-up">
         {/* Topo / Voltar */}
         <div className="text-center mb-6">
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-stone-500 hover:text-stone-900 transition-colors text-xs font-semibold mb-6"
+            className="inline-flex items-center gap-1.5 text-stone-500 hover:text-stone-900 transition-colors text-xs font-semibold mb-5"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             Voltar ao início
           </Link>
           <div className="flex items-center justify-center gap-2 mb-2">
-            <div className="w-9 h-9 bg-stone-900 rounded-xl flex items-center justify-center text-white shadow-sm">
+            <div className="w-9 h-9 bg-stone-900 rounded-xl flex items-center justify-center text-white shadow-sm shrink-0">
               <QrCode className="w-5 h-5" />
             </div>
             <span className="text-2xl font-extrabold tracking-tight text-stone-950">CardápioQR</span>
@@ -68,7 +68,7 @@ export default function LoginPage() {
         </div>
 
         {/* Card de Formulário */}
-        <div className="bg-white border border-stone-200/90 rounded-3xl p-7 sm:p-9 shadow-sm">
+        <div className="bg-white border border-stone-200/90 rounded-2xl sm:rounded-3xl p-5 sm:p-8 shadow-sm">
           <h1 className="text-xl font-bold text-stone-900 mb-6 tracking-tight">Entrar na conta</h1>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
