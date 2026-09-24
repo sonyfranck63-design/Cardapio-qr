@@ -22,44 +22,47 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-[#faf8f5] text-stone-900 font-sans selection:bg-orange-100 selection:text-orange-950">
       {/* Barra de Navegação */}
-      <nav className="fixed top-0 inset-x-0 z-50 border-b border-stone-200/80 bg-[#faf8f5]/90 backdrop-blur-md">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-stone-900 rounded-lg flex items-center justify-center text-white shadow-sm">
+      <nav className="fixed top-0 inset-x-0 z-50 border-b border-stone-200/80 bg-[#faf8f5]/95 backdrop-blur-md">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+          <Link href="/" className="flex items-center gap-2 sm:gap-2.5 shrink-0 select-none">
+            <div className="w-8 h-8 bg-stone-900 rounded-lg flex items-center justify-center text-white shadow-sm shrink-0">
               <QrCode className="w-5 h-5" />
             </div>
-            <span className="font-bold text-lg tracking-tight text-stone-900">CardápioQR</span>
-          </div>
+            <span className="font-bold text-base sm:text-lg tracking-tight text-stone-900 whitespace-nowrap">
+              CardápioQR
+            </span>
+          </Link>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <Link
               href="/demo"
-              className="text-xs sm:text-sm font-semibold text-stone-700 hover:text-stone-950 transition-colors px-2 py-1"
+              className="hidden md:inline-flex text-xs sm:text-sm font-semibold text-stone-700 hover:text-stone-950 transition-colors px-2.5 py-1.5 whitespace-nowrap"
             >
               Ver Demo ao Vivo
             </Link>
             <Link
               href="/auth/login"
-              className="text-xs sm:text-sm text-stone-600 hover:text-stone-950 transition-colors px-2 py-1"
+              className="text-xs sm:text-sm font-medium text-stone-700 hover:text-stone-950 transition-colors px-2.5 py-1.5 whitespace-nowrap"
             >
               Entrar
             </Link>
             <Link
               href="/auth/register"
-              className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-orange-700 hover:bg-orange-800 text-white font-semibold text-xs sm:text-sm transition-all shadow-sm active:scale-95"
+              className="inline-flex items-center justify-center px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl bg-orange-700 hover:bg-orange-800 text-white font-semibold text-xs sm:text-sm transition-all shadow-sm active:scale-95 whitespace-nowrap shrink-0"
             >
-              Testar 7 dias grátis
+              <span className="sm:hidden">Criar grátis</span>
+              <span className="hidden sm:inline">Testar 7 dias grátis</span>
             </Link>
           </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-28 pb-16 sm:pt-36 sm:pb-20 px-4 sm:px-6">
+      <section className="pt-24 pb-16 sm:pt-36 sm:pb-20 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-stone-300 bg-white text-stone-700 text-xs font-semibold mb-6 shadow-xs">
-            <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
-            Sem necessidade de baixar aplicativo • Abre instantâneo no celular
+          <div className="inline-flex items-center gap-2 px-3 sm:px-3.5 py-1.5 rounded-full border border-stone-300 bg-white text-stone-700 text-[11px] sm:text-xs font-semibold mb-6 shadow-xs max-w-full">
+            <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse shrink-0" />
+            <span>Sem baixar aplicativo • Abre instantâneo no celular</span>
           </div>
 
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-stone-950 tracking-tight leading-[1.15] mb-6">
