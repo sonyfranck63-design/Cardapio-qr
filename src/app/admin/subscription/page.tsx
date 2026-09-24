@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Restaurant } from '@/types/database'
-import { CreditCard, CheckCircle2, AlertCircle, Clock, Sparkles, ShieldCheck, Zap, RefreshCw } from 'lucide-react'
+import { CreditCard, CheckCircle2, AlertCircle, Clock, ShieldCheck, Zap, RefreshCw } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { formatPlanPrice } from '@/lib/plans'
 
@@ -62,12 +62,11 @@ function SubscriptionContent() {
         clearInterval(interval)
         setPollingActive(false)
         toast.success('Pagamento confirmado e assinatura renovada com sucesso!')
-        // Limpa parâmetro da URL de forma limpa
         router.replace('/admin/subscription')
       } else if (attempts >= maxAttempts) {
         clearInterval(interval)
         setPollingActive(false)
-        toast('Pagamento recebido pelo Mercado Pago. A confirmação pode levar alguns minutos para ser finalizada.', {
+        toast('Pagamento recebido. A confirmação bancária pode levar alguns instantes.', {
           icon: 'ℹ️',
         })
       }
@@ -79,7 +78,7 @@ function SubscriptionContent() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-orange-700 border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -99,51 +98,55 @@ function SubscriptionContent() {
   const isActive = restaurant.subscription_status === 'active' && !isExpired
 
   async function handleCheckout() {
+    setProcessingPayment(true)
     try {
-      setProcessingPayment(true)
       const res = await fetch('/api/mercadopago/checkout', {
         method: 'POST',
       })
+
       const data = await res.json()
 
-      if (data.error) {
-        toast.error(data.error)
-        setProcessingPayment(false)
+      if (!res.ok || !data.init_point) {
+        toast.error(data.error || 'Erro ao iniciar pagamento')
         return
       }
 
-      if (data.url) {
-        window.location.href = data.url
-      }
+      window.location.href = data.init_point
     } catch {
-      toast.error('Erro ao conectar ao Mercado Pago')
+      toast.error('Erro de conexão ao iniciar pagamento')
+    } finally {
       setProcessingPayment(false)
     }
   }
 
   return (
-    <div className="space-y-8 max-w-4xl">
+    <div className="space-y-8 animate-fade-in font-sans text-stone-900">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white">Assinatura & Plano</h1>
-        <p className="text-sm text-gray-400 mt-1">Gerencie seu plano mensal e mantenha seu cardápio sempre no ar</p>
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-stone-950 tracking-tight flex items-center gap-2.5">
+          <CreditCard className="w-6 h-6 text-orange-700" />
+          Minha Assinatura
+        </h1>
+        <p className="text-stone-500 text-sm mt-1">
+          Gerencie o plano do seu restaurante e acompanhe a validade do seu cardápio online.
+        </p>
       </div>
 
       {/* Banners de Feedback do Pagamento */}
       {paymentStatus === 'success' && (
-        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-start gap-3 text-emerald-300 animate-slide-up">
+        <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-start gap-3 text-emerald-950 animate-slide-up">
           {pollingActive ? (
-            <RefreshCw className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5 animate-spin" />
+            <RefreshCw className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5 animate-spin" />
           ) : (
-            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+            <CheckCircle2 className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />
           )}
           <div>
-            <p className="font-semibold text-sm">
+            <p className="font-bold text-sm">
               {pollingActive
                 ? 'Pagamento recebido! Confirmando ativação com o gateway...'
                 : 'Pagamento processado com sucesso!'}
             </p>
-            <p className="text-xs text-emerald-200/80 mt-0.5">
+            <p className="text-xs text-emerald-800 mt-0.5">
               {pollingActive
                 ? 'Aguarde alguns segundos enquanto sincronizamos os dados do Mercado Pago automaticamente.'
                 : 'Sua assinatura mensal foi renovada e o cardápio está totalmente ativo.'}
@@ -153,11 +156,11 @@ function SubscriptionContent() {
       )}
 
       {paymentStatus === 'pending' && (
-        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-3 text-amber-300 animate-slide-up">
-          <Clock className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+        <div className="p-4 sm:p-5 rounded-2xl bg-amber-50 border border-amber-200 flex items-start gap-3 text-amber-950 animate-slide-up">
+          <Clock className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
           <div>
-            <p className="font-semibold text-sm">Pagamento em processamento ou pendente</p>
-            <p className="text-xs text-amber-200/80 mt-0.5">
+            <p className="font-bold text-sm">Pagamento em processamento ou pendente</p>
+            <p className="text-xs text-amber-800 mt-0.5">
               Se você pagou via PIX ou boleto, a liberação ocorre assim que a instituição bancária concluir a compensação.
             </p>
           </div>
@@ -165,11 +168,11 @@ function SubscriptionContent() {
       )}
 
       {paymentStatus === 'failure' && (
-        <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-start gap-3 text-red-300 animate-slide-up">
-          <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+        <div className="p-4 sm:p-5 rounded-2xl bg-red-50 border border-red-200 flex items-start gap-3 text-red-950 animate-slide-up">
+          <AlertCircle className="w-5 h-5 text-red-700 shrink-0 mt-0.5" />
           <div>
-            <p className="font-semibold text-sm">O pagamento não foi concluído</p>
-            <p className="text-xs text-red-200/80 mt-0.5">
+            <p className="font-bold text-sm">O pagamento não foi concluído</p>
+            <p className="text-xs text-red-800 mt-0.5">
               A transação foi recusada pela operadora ou cancelada. Nenhuma cobrança foi efetuada. Tente novamente abaixo.
             </p>
           </div>
@@ -177,34 +180,34 @@ function SubscriptionContent() {
       )}
 
       {/* Main Status Card */}
-      <div className="glass-card p-6 sm:p-8 relative overflow-hidden">
+      <div className="admin-card p-6 sm:p-8 relative overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="flex items-center gap-3">
-              <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Status atual:</span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-stone-500">Status atual:</span>
               {isActive && <span className="badge-active text-xs">Ativo • Mensal</span>}
-              {isTrial && <span className="px-2.5 py-0.5 text-xs font-medium rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">Período de Teste Grátis</span>}
-              {isExpired && <span className="badge-inactive text-xs">Expirado / Suspenso</span>}
+              {isTrial && <span className="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-amber-100 text-amber-900 border border-amber-200">Período de Teste Grátis</span>}
+              {isExpired && <span className="badge-inactive text-xs text-red-700 bg-red-50 border-red-200">Expirado / Suspenso</span>}
             </div>
 
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-stone-950">
               {isActive && 'Sua assinatura está ativa'}
               {isTrial && `${daysRemaining} ${daysRemaining === 1 ? 'dia restante' : 'dias restantes'} de teste`}
               {isExpired && 'Assinatura vencida'}
             </h2>
 
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-stone-600">
               {isExpired ? (
-                <span className="text-red-400">
+                <span className="text-red-700 font-semibold">
                   Venceu em {expiresDate.toLocaleDateString('pt-BR')}. Regularize para reativar seu cardápio imediatamente.
                 </span>
               ) : isTrial ? (
                 <span>
-                  Seu período de teste encerra em <strong className="text-white">{expiresDate.toLocaleDateString('pt-BR')}</strong>.
+                  Seu período de teste encerra em <strong className="text-stone-900">{expiresDate.toLocaleDateString('pt-BR')}</strong>.
                 </span>
               ) : (
                 <span>
-                  Próxima renovação: <strong className="text-white">{expiresDate.toLocaleDateString('pt-BR')}</strong> (em {daysRemaining} dias)
+                  Próxima renovação: <strong className="text-stone-900">{expiresDate.toLocaleDateString('pt-BR')}</strong> (em {daysRemaining} dias)
                 </span>
               )}
             </p>
@@ -213,7 +216,7 @@ function SubscriptionContent() {
           <button
             onClick={handleCheckout}
             disabled={processingPayment}
-            className="btn-primary py-3 px-6 text-sm sm:text-base font-semibold shadow-brand flex items-center justify-center gap-2"
+            className="btn-primary py-3 px-6 text-sm sm:text-base font-semibold flex items-center justify-center gap-2 shrink-0"
           >
             {processingPayment ? (
               <RefreshCw className="w-4 h-4 animate-spin" />
@@ -225,68 +228,68 @@ function SubscriptionContent() {
         </div>
 
         {isExpired && (
-          <div className="mt-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-300 text-sm flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+          <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-900 text-xs sm:text-sm flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-red-700 shrink-0 mt-0.5" />
             <div>
               <strong>Atenção: Seu cardápio digital via QR Code está temporariamente suspenso.</strong>
-              <p className="mt-1 text-red-200/80 text-xs">
-                Clientes que escanearem a placa nas mesas verão uma mensagem informando que o cardápio está indisponível. Regularize a mensalidade para reativar instantaneamente.
+              <p className="mt-1 text-red-800 text-xs">
+                Clientes que escanearem a placa nas mesas verão uma mensagem informando que o cardápio está temporariamente indisponível. Regularize a mensalidade para reativar instantaneamente.
               </p>
             </div>
           </div>
         )}
       </div>
 
-      {/* Plan Details & Features */}
+      {/* Detalhes do Plano */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="glass-card p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-bold text-lg text-white">Plano Pro CardápioQR</h3>
-            <span className="text-2xl font-extrabold text-brand-400">{formatPlanPrice()}<span className="text-sm font-normal text-gray-400">/mês</span></span>
+        <div className="admin-card p-6 space-y-4">
+          <div className="flex items-center justify-between border-b border-stone-200 pb-4">
+            <h3 className="font-bold text-lg text-stone-950">Plano Pro CardápioQR</h3>
+            <span className="text-2xl font-extrabold text-stone-950">{formatPlanPrice()}<span className="text-xs font-normal text-stone-500">/mês</span></span>
           </div>
-          <p className="text-sm text-gray-400">
-            Tudo o que seu estabelecimento precisa para vender mais e automatizar o atendimento.
+          <p className="text-xs sm:text-sm text-stone-600 leading-relaxed">
+            Tudo o que seu estabelecimento precisa para apresentar pratos com sofisticação e receber pedidos no WhatsApp.
           </p>
 
-          <ul className="space-y-3 pt-2 text-sm text-gray-300">
+          <ul className="space-y-2.5 pt-2 text-xs sm:text-sm text-stone-700">
             <li className="flex items-center gap-2.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>Cardápio online disponível 24h</span>
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>Cardápio online disponível 24h sem limite de acessos</span>
             </li>
             <li className="flex items-center gap-2.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>QR Code exclusivo para download e impressão</span>
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>QR Code exclusivo para download em SVG e PNG de alta resolução</span>
             </li>
             <li className="flex items-center gap-2.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>Categorias e itens ilimitados com fotos e preços</span>
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>Categorias e pratos ilimitados com fotos e descrições</span>
             </li>
             <li className="flex items-center gap-2.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>Botão WhatsApp integrado para envio do pedido</span>
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>Envio de pedidos direto no WhatsApp do seu atendimento</span>
             </li>
             <li className="flex items-center gap-2.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-              <span>Sem cobrança de comissões por pedido</span>
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>Zero taxas ou comissões sobre as suas vendas</span>
             </li>
           </ul>
         </div>
 
-        <div className="glass-card p-6 flex flex-col justify-between">
+        <div className="admin-card p-6 flex flex-col justify-between">
           <div>
-            <div className="flex items-center gap-2 text-white font-semibold text-lg mb-2">
-              <ShieldCheck className="w-5 h-5 text-brand-400" />
+            <div className="flex items-center gap-2 text-stone-900 font-bold text-base mb-2">
+              <ShieldCheck className="w-5 h-5 text-orange-700" />
               Pagamento 100% Seguro
             </div>
-            <p className="text-sm text-gray-400 leading-relaxed">
-              Processado pelo <strong>Mercado Pago</strong> com confirmação imediata via <strong>PIX</strong> ou Cartão de Crédito.
+            <p className="text-xs sm:text-sm text-stone-600 leading-relaxed">
+              Processado com segurança pelo <strong>Mercado Pago</strong> com confirmação imediata via <strong>PIX</strong> ou Cartão de Crédito.
             </p>
 
-            <div className="mt-4 p-4 bg-white/5 rounded-xl border border-white/5 space-y-2">
-              <div className="text-xs text-gray-400">
-                <strong>Chave / ID do Estabelecimento:</strong>
+            <div className="mt-5 p-4 bg-stone-50 rounded-xl border border-stone-200 space-y-1.5">
+              <div className="text-xs text-stone-500 font-semibold">
+                ID do Estabelecimento:
               </div>
-              <div className="text-xs font-mono bg-black/40 px-2.5 py-1.5 rounded text-gray-300 truncate">
+              <div className="text-xs font-mono bg-white px-2.5 py-1.5 rounded border border-stone-200 text-stone-800 truncate">
                 {restaurant.id}
               </div>
             </div>
@@ -302,7 +305,7 @@ export default function SubscriptionPage() {
     <Suspense
       fallback={
         <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-4 border-orange-700 border-t-transparent rounded-full animate-spin" />
         </div>
       }
     >

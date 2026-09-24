@@ -20,7 +20,6 @@ import {
   MapPin,
   Clock,
   Instagram,
-  Eye,
 } from 'lucide-react'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
@@ -209,7 +208,6 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
   }
 
   async function onSubmit(data: RestaurantForm) {
-    // Verificar se slug já existe em outro restaurante
     const { data: existing } = await supabase
       .from('restaurants')
       .select('id')
@@ -244,7 +242,6 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
       return
     }
 
-    // Revalidação sob demanda imediata
     await revalidateMenuAction({ slug: data.slug, restaurantId: restaurant.id })
     if (data.slug !== restaurant.slug) {
       await revalidateMenuAction({ slug: restaurant.slug })
@@ -257,20 +254,25 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
   const contrastColor = getContrastColor(themeColorValue)
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-      {/* 1. Imagens: Logo e Imagem de Capa */}
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 font-sans text-stone-900">
+      {/* 1. Imagens: Logo e Capa */}
       <div className="admin-card p-6 space-y-6">
-        <h2 className="text-base font-semibold text-white flex items-center gap-2">
-          <ImageIcon className="w-4 h-4 text-orange-400" />
-          Identidade Visual (Logo e Capa)
-        </h2>
+        <div>
+          <h2 className="text-base font-bold text-stone-900 flex items-center gap-2">
+            <ImageIcon className="w-4 h-4 text-orange-700" />
+            Identidade Visual (Logo e Capa)
+          </h2>
+          <p className="text-xs text-stone-500 mt-0.5">
+            Imagens que aparecerão no cabeçalho do seu cardápio digital.
+          </p>
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
           {/* Logo */}
           <div className="space-y-3">
-            <label className="text-xs font-medium text-gray-300">Logo do restaurante (1:1)</label>
+            <label className="input-label">Logo do restaurante (1:1)</label>
             <div className="flex items-center gap-4">
-              <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+              <div className="w-20 h-20 rounded-2xl bg-stone-100 border border-stone-200 flex items-center justify-center overflow-hidden shrink-0">
                 {logoUrl ? (
                   <Image
                     src={logoUrl}
@@ -281,7 +283,7 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
                     unoptimized
                   />
                 ) : (
-                  <Upload className="w-6 h-6 text-gray-500" />
+                  <Upload className="w-6 h-6 text-stone-400" />
                 )}
               </div>
               <div>
@@ -296,7 +298,7 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
                   type="button"
                   onClick={() => logoInputRef.current?.click()}
                   disabled={uploadingLogo}
-                  className="btn-secondary text-xs px-3 py-1.5"
+                  className="btn-secondary text-xs px-3.5 py-2"
                 >
                   {uploadingLogo ? (
                     <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Enviando...</>
@@ -304,7 +306,7 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
                     <><Upload className="w-3.5 h-3.5" /> Escolher logo</>
                   )}
                 </button>
-                <p className="text-[11px] text-gray-500 mt-1.5">Recomendado: 400x400px</p>
+                <p className="text-[11px] text-stone-500 mt-1.5">Recomendado: 400x400px</p>
                 {logoUrl && (
                   <button
                     type="button"
@@ -313,7 +315,7 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
                       setLogoUrl(null)
                       toast.success('Logo removida')
                     }}
-                    className="text-xs text-red-400 hover:text-red-300 mt-1 flex items-center gap-1 transition-colors"
+                    className="text-xs text-red-600 hover:text-red-800 mt-1.5 flex items-center gap-1 font-medium transition-colors"
                   >
                     <X className="w-3 h-3" /> Remover logo
                   </button>
@@ -322,11 +324,11 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
             </div>
           </div>
 
-          {/* Imagem de Capa (Banner) */}
+          {/* Imagem de Capa */}
           <div className="space-y-3">
-            <label className="text-xs font-medium text-gray-300">Imagem de capa / Banner panorâmico</label>
+            <label className="input-label">Imagem de capa / Banner (Panorâmico)</label>
             <div className="flex items-center gap-4">
-              <div className="w-32 h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0 relative">
+              <div className="w-32 h-20 rounded-2xl bg-stone-100 border border-stone-200 flex items-center justify-center overflow-hidden shrink-0 relative">
                 {coverUrl ? (
                   <Image
                     src={coverUrl}
@@ -336,7 +338,7 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
                     unoptimized
                   />
                 ) : (
-                  <ImageIcon className="w-6 h-6 text-gray-500" />
+                  <ImageIcon className="w-6 h-6 text-stone-400" />
                 )}
               </div>
               <div>
@@ -351,7 +353,7 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
                   type="button"
                   onClick={() => coverInputRef.current?.click()}
                   disabled={uploadingCover}
-                  className="btn-secondary text-xs px-3 py-1.5"
+                  className="btn-secondary text-xs px-3.5 py-2"
                 >
                   {uploadingCover ? (
                     <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Enviando...</>
@@ -359,7 +361,7 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
                     <><Upload className="w-3.5 h-3.5" /> Escolher capa</>
                   )}
                 </button>
-                <p className="text-[11px] text-gray-500 mt-1.5">Recomendado: 1200x500px</p>
+                <p className="text-[11px] text-stone-500 mt-1.5">Recomendado: 1200x500px</p>
                 {coverUrl && (
                   <button
                     type="button"
@@ -368,7 +370,7 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
                       setCoverUrl(null)
                       toast.success('Capa removida')
                     }}
-                    className="text-xs text-red-400 hover:text-red-300 mt-1 flex items-center gap-1 transition-colors"
+                    className="text-xs text-red-600 hover:text-red-800 mt-1.5 flex items-center gap-1 font-medium transition-colors"
                   >
                     <X className="w-3 h-3" /> Remover capa
                   </button>
@@ -379,17 +381,22 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
         </div>
       </div>
 
-      {/* 2. Personalização Visual: Cores e Fontes */}
+      {/* 2. Estilo Visual: Tipografia e Cores */}
       <div className="admin-card p-6 space-y-6">
-        <h2 className="text-base font-semibold text-white flex items-center gap-2">
-          <Palette className="w-4 h-4 text-orange-400" />
-          Tema & Estilo Visual
-        </h2>
+        <div>
+          <h2 className="text-base font-bold text-stone-900 flex items-center gap-2">
+            <Palette className="w-4 h-4 text-orange-700" />
+            Tema & Estilo Visual
+          </h2>
+          <p className="text-xs text-stone-500 mt-0.5">
+            Personalize a estética do cardápio para combinar com o estilo do seu bar ou restaurante.
+          </p>
+        </div>
 
         {/* Seleção de Tipografia */}
         <div className="space-y-3">
           <label className="input-label flex items-center gap-1.5">
-            <Type className="w-4 h-4 text-gray-400" />
+            <Type className="w-3.5 h-3.5 text-stone-500" />
             Família Tipográfica
           </label>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -403,13 +410,13 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
                   onClick={() => setValue('theme_font', fontKey)}
                   className={`p-3.5 rounded-xl border text-left transition-all ${
                     isSelected
-                      ? 'border-orange-500 bg-orange-500/10 ring-1 ring-orange-500'
-                      : 'border-white/10 bg-white/5 hover:bg-white/10'
+                      ? 'border-orange-600 bg-orange-50/80 ring-1 ring-orange-600'
+                      : 'border-stone-200 bg-stone-50 hover:bg-stone-100'
                   }`}
                 >
-                  <div className="text-sm font-semibold text-white mb-1">{option.name}</div>
-                  <div className="text-xs text-gray-400 mb-2">{option.description}</div>
-                  <div className={`text-xs text-orange-300 ${option.fontClass}`}>
+                  <div className="text-sm font-bold text-stone-900 mb-0.5">{option.name}</div>
+                  <div className="text-xs text-stone-500 mb-2">{option.description}</div>
+                  <div className={`text-xs text-orange-800 font-medium ${option.fontClass}`}>
                     &ldquo;{option.sampleText}&rdquo;
                   </div>
                 </button>
@@ -420,7 +427,7 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
 
         {/* Seleção de Cor Tema */}
         <div className="space-y-3">
-          <label className="input-label">Cor de Destaque do Cabeçalho</label>
+          <label className="input-label">Cor de Fundo do Cabeçalho</label>
           <div className="flex flex-wrap items-center gap-2.5">
             {PRESET_THEME_COLORS.map(preset => (
               <button
@@ -429,15 +436,14 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
                 onClick={() => setValue('theme_color', preset.hex)}
                 className={`w-9 h-9 rounded-xl border-2 transition-transform ${preset.bgClass} ${
                   themeColorValue.toLowerCase() === preset.hex.toLowerCase()
-                    ? 'border-white scale-110 shadow-lg'
+                    ? 'border-stone-900 scale-110 shadow-sm'
                     : 'border-transparent hover:scale-105 opacity-80 hover:opacity-100'
                 }`}
                 title={preset.name}
               />
             ))}
 
-            {/* Seletor Customizado */}
-            <div className="flex items-center gap-2 ml-2 pl-3 border-l border-white/10">
+            <div className="flex items-center gap-2 ml-2 pl-3 border-l border-stone-200">
               <input
                 type="color"
                 id="theme_color_picker"
@@ -445,36 +451,36 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
                 onChange={e => setValue('theme_color', e.target.value)}
                 className="w-9 h-9 rounded-xl cursor-pointer bg-transparent border-0"
               />
-              <span className="text-xs font-mono text-gray-400">{themeColorValue}</span>
+              <span className="text-xs font-mono font-medium text-stone-600">{themeColorValue}</span>
             </div>
           </div>
 
-          {/* Prévia de contraste WCAG */}
+          {/* Prévia de contraste */}
           <div
-            className="p-3 rounded-xl border flex items-center justify-between mt-2"
+            className="p-3.5 rounded-xl border flex items-center justify-between mt-2 shadow-xs"
             style={{ backgroundColor: themeColorValue, color: contrastColor }}
           >
-            <span className="text-xs font-semibold">Prévia de Contraste Automático</span>
-            <span className="text-[11px] font-mono opacity-80">
-              Texto: {contrastColor === '#ffffff' ? 'Branco' : 'Escuro'} (WCAG AA Aprovado)
+            <span className="text-xs font-bold">Prévia de Legibilidade do Cabeçalho</span>
+            <span className="text-[11px] font-mono opacity-90 font-medium">
+              Texto: {contrastColor === '#ffffff' ? 'Branco' : 'Escuro'} (WCAG AA Garantido)
             </span>
           </div>
         </div>
 
-        {/* Opção de Exibir Esgotados */}
-        <div className="pt-2 border-t border-white/10">
-          <label className="flex items-start gap-3 cursor-pointer">
+        {/* Toggle de Esgotados */}
+        <div className="pt-2 border-t border-stone-200">
+          <label className="flex items-start gap-3 cursor-pointer select-none">
             <input
               type="checkbox"
               {...register('show_sold_out')}
-              className="mt-1 w-4 h-4 rounded border-gray-700 text-orange-600 focus:ring-orange-500 bg-gray-900"
+              className="mt-1 w-4 h-4 rounded border-stone-300 text-orange-700 focus:ring-orange-600"
             />
             <div>
-              <span className="text-sm font-medium text-white">
+              <span className="text-sm font-semibold text-stone-900">
                 Exibir itens esgotados no cardápio
               </span>
-              <p className="text-xs text-gray-400 mt-0.5">
-                Quando ativado, pratos desativados continuam visíveis com o selo &ldquo;Esgotado&rdquo;. Quando desativado, eles ficam ocultos.
+              <p className="text-xs text-stone-500 mt-0.5">
+                Quando ativado, pratos desativados continuam visíveis com o selo &ldquo;Esgotado&rdquo;. Quando desativado, eles somem do cardápio automaticamente.
               </p>
             </div>
           </label>
@@ -483,12 +489,15 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
 
       {/* 3. Informações da Casa */}
       <div className="admin-card p-6 space-y-5">
-        <h2 className="text-base font-semibold text-white">Informações Principais</h2>
+        <div>
+          <h2 className="text-base font-bold text-stone-900">Informações Principais</h2>
+          <p className="text-xs text-stone-500 mt-0.5">Dados cadastrais exibidos ao cliente.</p>
+        </div>
 
         <div>
           <label htmlFor="name" className="input-label">Nome do restaurante</label>
           <input id="name" type="text" className="input-field" {...register('name')} />
-          {errors.name && <p className="mt-1.5 text-xs text-red-400">{errors.name.message}</p>}
+          {errors.name && <p className="mt-1.5 text-xs text-red-600 font-medium">{errors.name.message}</p>}
         </div>
 
         <div>
@@ -500,32 +509,30 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
             className="input-field"
             {...register('tagline')}
           />
-          {errors.tagline && <p className="mt-1.5 text-xs text-red-400">{errors.tagline.message}</p>}
-          <p className="text-xs text-gray-500 mt-1">Exibido logo abaixo do nome do restaurante.</p>
+          {errors.tagline && <p className="mt-1.5 text-xs text-red-600 font-medium">{errors.tagline.message}</p>}
+          <p className="text-xs text-stone-500 mt-1">Exibido logo abaixo do nome do restaurante no cardápio.</p>
         </div>
 
         <div>
-          <label htmlFor="slug" className="input-label">
-            <span className="flex items-center gap-1.5">
-              <LinkIcon className="w-3.5 h-3.5" />
-              Slug (URL única do cardápio)
-            </span>
+          <label htmlFor="slug" className="input-label flex items-center gap-1.5">
+            <LinkIcon className="w-3.5 h-3.5 text-stone-500" />
+            Slug (URL única do cardápio)
           </label>
           <div className="flex gap-2">
             <input id="slug" type="text" className="input-field" {...register('slug')} />
             <button
               type="button"
               onClick={handleAutoSlug}
-              className="btn-secondary text-xs px-3 whitespace-nowrap shrink-0"
+              className="btn-secondary text-xs px-3.5 whitespace-nowrap shrink-0"
             >
               Gerar
             </button>
           </div>
           {errors.slug ? (
-            <p className="mt-1.5 text-xs text-red-400">{errors.slug.message}</p>
+            <p className="mt-1.5 text-xs text-red-600 font-medium">{errors.slug.message}</p>
           ) : (
-            <p className="mt-1.5 text-xs text-gray-500">
-              cardapioqr.com/<span className="text-orange-400">{watch('slug')}</span>
+            <p className="mt-1.5 text-xs text-stone-500">
+              cardapioqr.com/<span className="text-orange-700 font-bold">{watch('slug')}</span>
             </p>
           )}
         </div>
@@ -533,7 +540,7 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label htmlFor="opening_hours" className="input-label flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-gray-400" />
+              <Clock className="w-3.5 h-3.5 text-stone-500" />
               Horário de Funcionamento
             </label>
             <input
@@ -543,16 +550,16 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
               className="input-field"
               {...register('opening_hours')}
             />
-            {errors.opening_hours && <p className="mt-1.5 text-xs text-red-400">{errors.opening_hours.message}</p>}
+            {errors.opening_hours && <p className="mt-1.5 text-xs text-red-600 font-medium">{errors.opening_hours.message}</p>}
           </div>
 
           <div>
             <label htmlFor="instagram" className="input-label flex items-center gap-1.5">
-              <Instagram className="w-3.5 h-3.5 text-gray-400" />
+              <Instagram className="w-3.5 h-3.5 text-stone-500" />
               Perfil do Instagram
             </label>
             <div className="relative">
-              <span className="absolute left-3.5 top-3 text-sm text-gray-500">@</span>
+              <span className="absolute left-3.5 top-2.5 text-sm text-stone-400 font-medium">@</span>
               <input
                 id="instagram"
                 type="text"
@@ -561,13 +568,13 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
                 {...register('instagram')}
               />
             </div>
-            {errors.instagram && <p className="mt-1.5 text-xs text-red-400">{errors.instagram.message}</p>}
+            {errors.instagram && <p className="mt-1.5 text-xs text-red-600 font-medium">{errors.instagram.message}</p>}
           </div>
         </div>
 
         <div>
           <label htmlFor="address" className="input-label flex items-center gap-1.5">
-            <MapPin className="w-3.5 h-3.5 text-gray-400" />
+            <MapPin className="w-3.5 h-3.5 text-stone-500" />
             Endereço Completo
           </label>
           <input
@@ -577,33 +584,38 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
             className="input-field"
             {...register('address')}
           />
-          {errors.address && <p className="mt-1.5 text-xs text-red-400">{errors.address.message}</p>}
-          <p className="text-xs text-gray-500 mt-1">Cria automaticamente um link que abre no Google Maps.</p>
+          {errors.address && <p className="mt-1.5 text-xs text-red-600 font-medium">{errors.address.message}</p>}
+          <p className="text-xs text-stone-500 mt-1">Cria automaticamente um link direto que abre no Google Maps.</p>
         </div>
       </div>
 
       {/* 4. WhatsApp */}
       <div className="admin-card p-6 space-y-5">
-        <h2 className="text-base font-semibold text-white flex items-center gap-2">
-          <Phone className="w-4 h-4 text-green-400" />
-          Atendimento & Pedidos no WhatsApp
-        </h2>
+        <div>
+          <h2 className="text-base font-bold text-stone-900 flex items-center gap-2">
+            <Phone className="w-4 h-4 text-emerald-700" />
+            Atendimento & Pedidos no WhatsApp
+          </h2>
+          <p className="text-xs text-stone-500 mt-0.5">
+            Configure para onde o botão fixo do cardápio direciona os clientes.
+          </p>
+        </div>
 
         <div>
           <label htmlFor="whatsapp" className="input-label">Número do WhatsApp Comercial</label>
           <input
             id="whatsapp"
             type="tel"
-            placeholder="55119XXXXXXXX (com código 55 do Brasil)"
+            placeholder="55119XXXXXXXX"
             className="input-field"
             {...register('whatsapp')}
           />
-          {errors.whatsapp && <p className="mt-1.5 text-xs text-red-400">{errors.whatsapp.message}</p>}
-          <p className="mt-1.5 text-xs text-gray-500">Exemplo: 5511999998888 (55 + DDD + número com 9)</p>
+          {errors.whatsapp && <p className="mt-1.5 text-xs text-red-600 font-medium">{errors.whatsapp.message}</p>}
+          <p className="mt-1.5 text-xs text-stone-500">Formato: 5511999998888 (com código 55 do Brasil + DDD + 9 dígitos)</p>
         </div>
 
         <div>
-          <label htmlFor="whatsapp_message" className="input-label">Mensagem Padrão de Pedido</label>
+          <label htmlFor="whatsapp_message" className="input-label">Mensagem Padrão de Início de Conversa</label>
           <textarea
             id="whatsapp_message"
             rows={2}
@@ -611,12 +623,12 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
             className="input-field resize-none"
             {...register('whatsapp_message')}
           />
-          <p className="mt-1.5 text-xs text-gray-500">Mensagem inicial quando o cliente clica no botão fixo do cardápio</p>
+          <p className="mt-1.5 text-xs text-stone-500">Mensagem inicial que o cliente enviará ao clicar no botão do WhatsApp</p>
         </div>
       </div>
 
       {/* Botão de Salvar */}
-      <button type="submit" disabled={isSubmitting} className="btn-primary w-full sm:w-auto">
+      <button type="submit" disabled={isSubmitting} className="btn-primary w-full sm:w-auto px-7 py-3 text-sm">
         {isSubmitting ? (
           <><Loader2 className="w-4 h-4 animate-spin" /> Salvando configurações...</>
         ) : (
@@ -625,20 +637,20 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
       </button>
 
       {/* Zona de Perigo */}
-      <div className="border border-red-500/20 bg-red-500/5 rounded-2xl p-6 space-y-4 mt-12">
+      <div className="border border-red-200 bg-red-50/70 rounded-2xl p-6 space-y-4 mt-12">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center text-red-400 shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-red-100 text-red-700 flex items-center justify-center shrink-0">
             <AlertTriangle className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-base font-semibold text-white">Zona de Perigo</h2>
-            <p className="text-xs text-gray-400">Ações irreversíveis para a sua conta e restaurante</p>
+            <h2 className="text-base font-bold text-red-950">Zona de Perigo</h2>
+            <p className="text-xs text-red-800">Ações irreversíveis para a sua conta e restaurante</p>
           </div>
         </div>
 
-        <p className="text-sm text-gray-400 leading-relaxed">
+        <p className="text-xs sm:text-sm text-red-900 leading-relaxed">
           Ao excluir sua conta, todos os dados do seu restaurante (pratos, categorias, configurações e imagens) serão{' '}
-          <strong className="text-red-300">permanentemente removidos</strong> do banco de dados. Esta ação não poderá ser desfeita.
+          <strong className="text-red-950 font-bold">permanentemente removidos</strong> do banco de dados. Esta ação não poderá ser desfeita.
         </p>
 
         {!showDeleteConfirm ? (
@@ -646,35 +658,35 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
             <button
               type="button"
               onClick={() => setShowDeleteConfirm(true)}
-              className="px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 hover:text-red-300 font-medium text-sm rounded-xl transition-all flex items-center gap-2"
+              className="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-800 font-semibold text-xs rounded-xl transition-all flex items-center gap-2 border border-red-200"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-3.5 h-3.5" />
               Excluir minha conta e restaurante
             </button>
           </div>
         ) : (
-          <div className="p-4 bg-red-950/40 border border-red-500/30 rounded-xl space-y-3">
-            <p className="text-sm text-red-200 font-medium">
-              Tem certeza absoluta? Para confirmar, digite <span className="font-bold underline text-white">EXCLUIR</span> no campo abaixo:
+          <div className="p-4 bg-white border border-red-300 rounded-xl space-y-3">
+            <p className="text-xs sm:text-sm text-red-950 font-semibold">
+              Tem certeza absoluta? Para confirmar, digite <span className="font-bold underline text-red-700">EXCLUIR</span> no campo abaixo:
             </p>
             <input
               type="text"
               placeholder="Digite EXCLUIR"
               value={deleteConfirmText}
               onChange={(e) => setDeleteConfirmText(e.target.value)}
-              className="input-field text-sm border-red-500/40 focus:border-red-500"
+              className="input-field text-sm border-red-300 focus:border-red-600"
             />
             <div className="flex items-center gap-3 pt-1">
               <button
                 type="button"
                 disabled={deleteConfirmText !== 'EXCLUIR' || isDeletingAccount}
                 onClick={handleDeleteAccount}
-                className="px-4 py-2 bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium text-sm rounded-xl transition-all flex items-center gap-2 shadow-lg shadow-red-600/30"
+                className="px-4 py-2 bg-red-700 hover:bg-red-800 disabled:opacity-50 text-white font-bold text-xs rounded-xl transition-all flex items-center gap-2"
               >
                 {isDeletingAccount ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" /> Excluindo permanentemente...</>
+                  <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Excluindo...</>
                 ) : (
-                  <><Trash2 className="w-4 h-4" /> Confirmar Exclusão Definitiva</>
+                  <><Trash2 className="w-3.5 h-3.5" /> Confirmar Exclusão Definitiva</>
                 )}
               </button>
               <button
@@ -684,7 +696,7 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
                   setShowDeleteConfirm(false)
                   setDeleteConfirmText('')
                 }}
-                className="px-4 py-2 bg-white/5 hover:bg-white/10 text-gray-300 text-sm font-medium rounded-xl transition-all"
+                className="px-4 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-medium rounded-xl transition-all"
               >
                 Cancelar
               </button>

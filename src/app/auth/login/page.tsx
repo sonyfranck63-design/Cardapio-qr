@@ -47,40 +47,43 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[#faf8f5] text-stone-900 flex items-center justify-center px-4 py-12 font-sans selection:bg-orange-100 selection:text-orange-950">
       <div className="w-full max-w-md animate-slide-up">
-        {/* Logo */}
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm mb-6">
-            <ArrowLeft className="w-4 h-4" />
+        {/* Topo / Voltar */}
+        <div className="text-center mb-6">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-stone-500 hover:text-stone-900 transition-colors text-xs font-semibold mb-6"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
             Voltar ao início
           </Link>
           <div className="flex items-center justify-center gap-2 mb-2">
-            <div className="w-10 h-10 bg-brand-500 rounded-xl flex items-center justify-center shadow-brand">
-              <QrCode className="w-6 h-6 text-white" />
+            <div className="w-9 h-9 bg-stone-900 rounded-xl flex items-center justify-center text-white shadow-sm">
+              <QrCode className="w-5 h-5" />
             </div>
-            <span className="text-2xl font-bold">CardápioQR</span>
+            <span className="text-2xl font-extrabold tracking-tight text-stone-950">CardápioQR</span>
           </div>
-          <p className="text-gray-400">Acesse seu painel de administração</p>
+          <p className="text-xs sm:text-sm text-stone-500">Acesse o painel de gestão do seu estabelecimento</p>
         </div>
 
-        {/* Form card */}
-        <div className="glass-card p-8">
-          <h1 className="text-xl font-bold text-white mb-6">Entrar na conta</h1>
+        {/* Card de Formulário */}
+        <div className="bg-white border border-stone-200/90 rounded-3xl p-7 sm:p-9 shadow-sm">
+          <h1 className="text-xl font-bold text-stone-900 mb-6 tracking-tight">Entrar na conta</h1>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
-              <label htmlFor="email" className="input-label">E-mail</label>
+              <label htmlFor="email" className="input-label">E-mail de acesso</label>
               <input
                 id="email"
                 type="email"
-                placeholder="seu@email.com"
+                placeholder="seu@restaurante.com"
                 className="input-field"
                 autoComplete="email"
                 {...register('email')}
               />
               {errors.email && (
-                <p className="mt-1.5 text-xs text-red-400">{errors.email.message}</p>
+                <p className="mt-1.5 text-xs text-red-600 font-medium">{errors.email.message}</p>
               )}
             </div>
 
@@ -98,36 +101,37 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition-colors"
+                  aria-label={showPassword ? 'Ocultar senha' : 'Ver senha'}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
               {errors.password && (
-                <p className="mt-1.5 text-xs text-red-400">{errors.password.message}</p>
+                <p className="mt-1.5 text-xs text-red-600 font-medium">{errors.password.message}</p>
               )}
             </div>
 
             <button
               type="submit"
               disabled={isSubmitting}
-              className="btn-primary w-full justify-center py-3 text-base mt-2"
+              className="btn-primary w-full justify-center py-3 text-sm mt-3"
             >
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Entrando...
+                  Acessando conta...
                 </>
               ) : (
-                'Entrar'
+                'Entrar no painel'
               )}
             </button>
           </form>
 
-          <p className="text-center text-sm text-gray-500 mt-6">
-            Não tem conta?{' '}
-            <Link href="/auth/register" className="text-brand-400 hover:text-brand-300 font-medium transition-colors">
-              Criar conta grátis
+          <p className="text-center text-xs text-stone-500 mt-6 pt-5 border-t border-stone-100">
+            Ainda não tem conta?{' '}
+            <Link href="/auth/register" className="text-orange-700 hover:text-orange-800 font-semibold transition-colors">
+              Criar conta e testar 7 dias grátis
             </Link>
           </p>
         </div>

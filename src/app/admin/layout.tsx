@@ -65,7 +65,7 @@ export default async function AdminLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 flex">
+    <div className="min-h-screen bg-[#faf8f5] text-stone-900 flex font-sans selection:bg-orange-100 selection:text-orange-950">
       <AdminSidebar restaurant={restaurant} />
       <main className="flex-1 lg:ml-64 min-h-screen">
         <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">

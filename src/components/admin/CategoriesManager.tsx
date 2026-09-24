@@ -168,24 +168,24 @@ export default function CategoriesManager({ restaurantId, restaurantSlug, initia
       <div className="admin-card overflow-hidden">
         {categories.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center mb-4">
-              <Tag className="w-7 h-7 text-gray-600" />
+            <div className="w-14 h-14 bg-stone-100 rounded-2xl flex items-center justify-center mb-4 text-stone-400">
+              <Tag className="w-7 h-7" />
             </div>
-            <p className="text-gray-400 font-medium">Nenhuma categoria ainda</p>
-            <p className="text-sm text-gray-600 mt-1">Crie sua primeira categoria acima</p>
+            <p className="text-stone-700 font-semibold">Nenhuma categoria cadastrada</p>
+            <p className="text-xs text-stone-500 mt-1">Crie sua primeira categoria acima para organizar seus pratos.</p>
           </div>
         ) : (
-          <ul className="divide-y divide-gray-800">
+          <ul className="divide-y divide-stone-200">
             {categories.map((cat, idx) => (
-              <li key={cat.id} className="flex items-center gap-3 px-5 py-4 hover:bg-white/2 transition-colors group">
+              <li key={cat.id} className="flex items-center gap-3 px-5 py-4 hover:bg-stone-50 transition-colors group">
                 {/* Botões de reordenação */}
-                <div className="flex flex-col gap-0.5 flex-shrink-0">
+                <div className="flex flex-col gap-0.5 shrink-0">
                   <button
                     type="button"
                     onClick={() => handleMove(idx, 'up')}
                     disabled={idx === 0}
                     aria-label={`Mover ${cat.name} para cima`}
-                    className="p-1 rounded text-gray-500 hover:text-white hover:bg-white/10 disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-gray-500 transition-colors"
+                    className="p-1 rounded text-stone-400 hover:text-stone-900 hover:bg-stone-200 disabled:opacity-20 disabled:hover:bg-transparent transition-colors"
                   >
                     <ChevronUp className="w-3.5 h-3.5" />
                   </button>
@@ -194,14 +194,14 @@ export default function CategoriesManager({ restaurantId, restaurantSlug, initia
                     onClick={() => handleMove(idx, 'down')}
                     disabled={idx === categories.length - 1}
                     aria-label={`Mover ${cat.name} para baixo`}
-                    className="p-1 rounded text-gray-500 hover:text-white hover:bg-white/10 disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-gray-500 transition-colors"
+                    className="p-1 rounded text-stone-400 hover:text-stone-900 hover:bg-stone-200 disabled:opacity-20 disabled:hover:bg-transparent transition-colors"
                   >
                     <ChevronDown className="w-3.5 h-3.5" />
                   </button>
                 </div>
 
-                <div className="w-7 h-7 bg-brand-500/15 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <span className="text-xs font-bold text-brand-400">{idx + 1}</span>
+                <div className="w-7 h-7 bg-orange-100 text-orange-800 rounded-lg flex items-center justify-center shrink-0">
+                  <span className="text-xs font-bold">{idx + 1}</span>
                 </div>
 
                 {editingId === cat.id ? (
@@ -217,29 +217,29 @@ export default function CategoriesManager({ restaurantId, restaurantSlug, initia
                       className="input-field py-1.5 text-sm flex-1"
                       autoFocus
                     />
-                    <button onClick={() => handleEdit(cat.id)} className="p-1.5 text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors">
+                    <button onClick={() => handleEdit(cat.id)} className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors">
                       <Check className="w-4 h-4" />
                     </button>
-                    <button onClick={() => setEditingId(null)} className="p-1.5 text-gray-500 hover:bg-white/5 rounded-lg transition-colors">
+                    <button onClick={() => setEditingId(null)} className="p-1.5 text-stone-400 hover:bg-stone-100 rounded-lg transition-colors">
                       <X className="w-4 h-4" />
                     </button>
                   </div>
                 ) : (
                   <>
-                    <span className="flex-1 text-sm font-medium text-gray-200">{cat.name}</span>
+                    <span className="flex-1 text-sm font-semibold text-stone-900">{cat.name}</span>
                     <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => { setEditingId(cat.id); setEditName(cat.name) }}
-                        className="p-2 text-gray-500 hover:text-brand-400 hover:bg-brand-500/10 rounded-lg transition-colors"
-                        title="Editar"
+                        className="p-2 text-stone-400 hover:text-orange-700 hover:bg-orange-50 rounded-lg transition-colors"
+                        title="Editar nome"
                       >
                         <Pencil className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={() => handleDelete(cat.id)}
                         disabled={deletingId === cat.id}
-                        className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                        title="Excluir"
+                        className="p-2 text-stone-400 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Excluir categoria"
                       >
                         {deletingId === cat.id
                           ? <Loader2 className="w-3.5 h-3.5 animate-spin" />

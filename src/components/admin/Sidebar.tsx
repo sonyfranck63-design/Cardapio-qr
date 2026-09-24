@@ -4,8 +4,17 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
-  QrCode, LayoutDashboard, Tag, UtensilsCrossed,
-  Settings, LogOut, Menu, X, ExternalLink, CreditCard, Crown
+  QrCode,
+  LayoutDashboard,
+  Tag,
+  UtensilsCrossed,
+  Settings,
+  LogOut,
+  Menu,
+  X,
+  ExternalLink,
+  CreditCard,
+  Crown,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Restaurant } from '@/types/database'
@@ -43,7 +52,7 @@ export default function AdminSidebar({ restaurant }: AdminSidebarProps) {
           }
         }
       } catch {
-        // Falha de rede não ativa Super Admin
+        // Falha de rede silenciosa
       }
     }
     checkAdmin()
@@ -62,31 +71,31 @@ export default function AdminSidebar({ restaurant }: AdminSidebarProps) {
   const menuUrl = getMenuUrl(restaurant.slug)
 
   const SidebarContent = () => (
-    <div className="flex flex-col h-full">
-      {/* Logo */}
-      <div className="p-6 border-b border-white/5">
+    <div className="flex flex-col h-full bg-white text-stone-900">
+      {/* Topo / Restaurante */}
+      <div className="p-5 border-b border-stone-200">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-brand-500 rounded-xl flex items-center justify-center shadow-brand flex-shrink-0">
-            <QrCode className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 bg-stone-900 rounded-xl flex items-center justify-center text-white shadow-sm shrink-0">
+            <QrCode className="w-5 h-5" />
           </div>
           <div className="min-w-0">
-            <p className="font-bold text-white text-sm leading-tight truncate">{restaurant.name}</p>
-            <p className="text-xs text-gray-500 truncate">{restaurant.slug}</p>
+            <p className="font-bold text-stone-900 text-sm leading-snug truncate">{restaurant.name}</p>
+            <p className="text-[11px] text-stone-400 font-mono truncate">/{restaurant.slug}</p>
           </div>
         </div>
         <a
           href={menuUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-3 flex items-center gap-1.5 text-xs text-brand-400 hover:text-brand-300 transition-colors"
+          className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-orange-700 hover:text-orange-800 transition-colors"
         >
-          <ExternalLink className="w-3 h-3 flex-shrink-0" />
-          <span className="truncate">Ver cardápio</span>
+          <ExternalLink className="w-3.5 h-3.5 shrink-0" />
+          <span>Ver cardápio ao vivo</span>
         </a>
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 p-4 space-y-1">
+      {/* Navegação Principal */}
+      <nav className="flex-1 p-3.5 space-y-1">
         {navItems.map(item => {
           const isActive = pathname === item.href
           return (
@@ -95,15 +104,16 @@ export default function AdminSidebar({ restaurant }: AdminSidebarProps) {
               href={item.href}
               onClick={() => setMobileOpen(false)}
               className={`
-                flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200
-                ${isActive
-                  ? 'bg-brand-500/15 text-brand-400 border border-brand-500/25'
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+                flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-all duration-150
+                ${
+                  isActive
+                    ? 'bg-orange-50 text-orange-950 font-bold border border-orange-200/90 shadow-2xs'
+                    : 'text-stone-600 hover:text-stone-950 hover:bg-stone-100 font-medium'
                 }
               `}
             >
-              <item.icon className="w-4 h-4 flex-shrink-0" />
-              {item.label}
+              <item.icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-orange-700' : 'text-stone-400'}`} />
+              <span>{item.label}</span>
             </Link>
           )
         })}
@@ -113,23 +123,23 @@ export default function AdminSidebar({ restaurant }: AdminSidebarProps) {
             <Link
               href="/superadmin"
               onClick={() => setMobileOpen(false)}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-amber-400 bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 transition-all duration-200"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-amber-900 bg-amber-50 border border-amber-200/90 hover:bg-amber-100 transition-all duration-150"
             >
-              <Crown className="w-4 h-4 flex-shrink-0 text-amber-400" />
-              Super Admin
+              <Crown className="w-4 h-4 shrink-0 text-amber-700" />
+              <span>Super Admin</span>
             </Link>
           </div>
         )}
       </nav>
 
-      {/* Logout */}
-      <div className="p-4 border-t border-white/5">
+      {/* Rodapé / Sair */}
+      <div className="p-3.5 border-t border-stone-200">
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-500 hover:text-red-400 hover:bg-red-500/5 transition-all duration-200 w-full"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-medium text-stone-500 hover:text-red-700 hover:bg-red-50 transition-colors w-full"
         >
-          <LogOut className="w-4 h-4" />
-          Sair
+          <LogOut className="w-4 h-4 shrink-0" />
+          <span>Encerrar sessão</span>
         </button>
       </div>
     </div>
@@ -138,22 +148,22 @@ export default function AdminSidebar({ restaurant }: AdminSidebarProps) {
   return (
     <>
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex flex-col fixed left-0 top-0 h-full w-64 bg-gray-900 border-r border-gray-800 z-40">
+      <aside className="hidden lg:flex flex-col fixed left-0 top-0 h-full w-64 bg-white border-r border-stone-200 z-40 shadow-xs">
         <SidebarContent />
       </aside>
 
       {/* Mobile top bar */}
-      <div className="lg:hidden fixed top-0 inset-x-0 h-14 bg-gray-900 border-b border-gray-800 flex items-center justify-between px-4 z-40">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 bg-brand-500 rounded-lg flex items-center justify-center">
-            <QrCode className="w-4 h-4 text-white" />
+      <div className="lg:hidden fixed top-0 inset-x-0 h-14 bg-white border-b border-stone-200 flex items-center justify-between px-4 z-40">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 bg-stone-900 rounded-lg flex items-center justify-center text-white">
+            <QrCode className="w-4 h-4" />
           </div>
-          <span className="font-bold text-sm text-white truncate max-w-[160px]">{restaurant.name}</span>
+          <span className="font-bold text-sm text-stone-900 truncate max-w-[170px]">{restaurant.name}</span>
         </div>
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="p-2 text-gray-400 hover:text-white transition-colors"
-          aria-label="Menu"
+          className="p-1.5 rounded-lg text-stone-600 hover:text-stone-950 hover:bg-stone-100 transition-colors"
+          aria-label="Abrir menu de navegação"
         >
           {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
@@ -162,21 +172,23 @@ export default function AdminSidebar({ restaurant }: AdminSidebarProps) {
       {/* Mobile drawer overlay */}
       {mobileOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/60 z-30 backdrop-blur-sm"
+          className="lg:hidden fixed inset-0 bg-black/40 z-40 backdrop-blur-xs"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
       {/* Mobile drawer */}
-      <aside className={`
-        lg:hidden fixed top-14 left-0 bottom-0 w-64 bg-gray-900 border-r border-gray-800 z-40
-        transition-transform duration-300
-        ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
+      <aside
+        className={`
+          lg:hidden fixed top-14 left-0 bottom-0 w-64 bg-white border-r border-stone-200 z-50
+          transition-transform duration-200 shadow-xl
+          ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
+        `}
+      >
         <SidebarContent />
       </aside>
 
-      {/* Mobile top bar spacer */}
+      {/* Mobile spacer */}
       <div className="lg:hidden h-14" />
     </>
   )

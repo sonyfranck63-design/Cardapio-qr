@@ -128,10 +128,10 @@ export default function ItemsManager({ restaurantId, restaurantSlug, categories,
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
           <button
             onClick={() => setFilterCategory('all')}
-            className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
+            className={`px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all ${
               filterCategory === 'all'
-                ? 'bg-brand-500 text-white'
-                : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                ? 'bg-stone-900 text-white shadow-xs'
+                : 'bg-white border border-stone-200 text-stone-700 hover:bg-stone-100'
             }`}
           >
             Todos ({items.length})
@@ -142,10 +142,10 @@ export default function ItemsManager({ restaurantId, restaurantSlug, categories,
               <button
                 key={cat.id}
                 onClick={() => setFilterCategory(cat.id)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
+                className={`px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all ${
                   filterCategory === cat.id
-                    ? 'bg-brand-500 text-white'
-                    : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                    ? 'bg-stone-900 text-white shadow-xs'
+                    : 'bg-white border border-stone-200 text-stone-700 hover:bg-stone-100'
                 }`}
               >
                 {cat.name} ({count})
@@ -156,10 +156,10 @@ export default function ItemsManager({ restaurantId, restaurantSlug, categories,
 
         <button
           onClick={() => { setEditingItem(null); setShowModal(true) }}
-          className="btn-primary flex-shrink-0"
+          className="btn-primary shrink-0"
         >
           <Plus className="w-4 h-4" />
-          Novo item
+          Novo prato
         </button>
       </div>
 
@@ -167,21 +167,21 @@ export default function ItemsManager({ restaurantId, restaurantSlug, categories,
       <div className="admin-card overflow-hidden">
         {filteredItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center mb-4">
-              <UtensilsCrossed className="w-7 h-7 text-gray-600" />
+            <div className="w-14 h-14 bg-stone-100 rounded-2xl flex items-center justify-center mb-4 text-stone-400">
+              <UtensilsCrossed className="w-7 h-7" />
             </div>
-            <p className="text-gray-400 font-medium">Nenhum item ainda</p>
-            <p className="text-sm text-gray-600 mt-1 mb-5">Adicione o primeiro item ao seu cardápio</p>
+            <p className="text-stone-700 font-semibold">Nenhum prato nesta categoria</p>
+            <p className="text-xs text-stone-500 mt-1 mb-5">Adicione itens para que seus clientes possam visualizar.</p>
             <button
               onClick={() => setShowModal(true)}
-              className="btn-primary"
+              className="btn-primary text-xs"
             >
               <Plus className="w-4 h-4" />
-              Adicionar item
+              Adicionar prato
             </button>
           </div>
         ) : (
-          <div className="divide-y divide-gray-800">
+          <div className="divide-y divide-stone-200">
             {filteredItems.map(item => {
               const categoryItems = items
                 .filter(i => i.category_id === item.category_id)
@@ -190,15 +190,15 @@ export default function ItemsManager({ restaurantId, restaurantSlug, categories,
               const isLast = categoryItems[categoryItems.length - 1]?.id === item.id
 
               return (
-              <div key={item.id} className={`flex items-center gap-3 sm:gap-4 px-4 py-3 hover:bg-white/2 transition-colors group ${!item.is_active ? 'opacity-60' : ''}`}>
+              <div key={item.id} className={`flex items-center gap-3 sm:gap-4 px-4 py-3 hover:bg-stone-50 transition-colors group ${!item.is_active ? 'opacity-60' : ''}`}>
                 {/* Botões de reordenação do item */}
-                <div className="flex flex-col gap-0.5 flex-shrink-0">
+                <div className="flex flex-col gap-0.5 shrink-0">
                   <button
                     type="button"
                     onClick={() => handleMoveItem(item, 'up')}
                     disabled={isFirst}
                     aria-label={`Mover ${item.name} para cima`}
-                    className="p-1 rounded text-gray-500 hover:text-white hover:bg-white/10 disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-gray-500 transition-colors"
+                    className="p-1 rounded text-stone-400 hover:text-stone-900 hover:bg-stone-200 disabled:opacity-20 disabled:hover:bg-transparent transition-colors"
                   >
                     <ChevronUp className="w-3.5 h-3.5" />
                   </button>
@@ -207,14 +207,14 @@ export default function ItemsManager({ restaurantId, restaurantSlug, categories,
                     onClick={() => handleMoveItem(item, 'down')}
                     disabled={isLast}
                     aria-label={`Mover ${item.name} para baixo`}
-                    className="p-1 rounded text-gray-500 hover:text-white hover:bg-white/10 disabled:opacity-20 disabled:hover:bg-transparent disabled:hover:text-gray-500 transition-colors"
+                    className="p-1 rounded text-stone-400 hover:text-stone-900 hover:bg-stone-200 disabled:opacity-20 disabled:hover:bg-transparent transition-colors"
                   >
                     <ChevronDown className="w-3.5 h-3.5" />
                   </button>
                 </div>
 
                 {/* Image */}
-                <div className="w-12 h-12 bg-white/5 rounded-xl overflow-hidden flex-shrink-0 border border-white/5 relative">
+                <div className="w-12 h-12 bg-stone-100 rounded-xl overflow-hidden shrink-0 border border-stone-200 relative">
                   {item.image_url ? (
                     <Image
                       src={item.image_url}
@@ -223,21 +223,22 @@ export default function ItemsManager({ restaurantId, restaurantSlug, categories,
                       height={48}
                       sizes="48px"
                       className="object-cover w-full h-full"
+                      unoptimized
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <UtensilsCrossed className="w-5 h-5 text-gray-600" />
+                    <div className="w-full h-full flex items-center justify-center text-stone-400">
+                      <UtensilsCrossed className="w-5 h-5 opacity-60" />
                     </div>
                   )}
                 </div>
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-200 truncate">{item.name}</p>
+                  <p className="text-sm font-bold text-stone-900 truncate">{item.name}</p>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-xs text-gray-500">{getCategoryName(item.category_id)}</span>
-                    <span className="text-xs text-gray-600">·</span>
-                    <span className="text-xs font-semibold text-brand-400">{formatCurrency(item.price)}</span>
+                    <span className="text-xs text-stone-500 font-medium">{getCategoryName(item.category_id)}</span>
+                    <span className="text-xs text-stone-300">·</span>
+                    <span className="text-xs font-bold text-orange-800 tabular-nums">{formatCurrency(item.price)}</span>
                   </div>
                 </div>
 
@@ -255,8 +256,8 @@ export default function ItemsManager({ restaurantId, restaurantSlug, categories,
                     title={item.is_active ? 'Desativar' : 'Ativar'}
                     className={`p-2 rounded-lg transition-colors ${
                       item.is_active
-                        ? 'text-gray-500 hover:text-yellow-400 hover:bg-yellow-400/10'
-                        : 'text-gray-500 hover:text-emerald-400 hover:bg-emerald-400/10'
+                        ? 'text-stone-400 hover:text-amber-700 hover:bg-amber-50'
+                        : 'text-stone-400 hover:text-emerald-700 hover:bg-emerald-50'
                     }`}
                   >
                     {togglingId === item.id
@@ -269,7 +270,7 @@ export default function ItemsManager({ restaurantId, restaurantSlug, categories,
                   <button
                     onClick={() => { setEditingItem(item); setShowModal(true) }}
                     title="Editar"
-                    className="p-2 text-gray-500 hover:text-brand-400 hover:bg-brand-500/10 rounded-lg transition-colors"
+                    className="p-2 text-stone-400 hover:text-orange-700 hover:bg-orange-50 rounded-lg transition-colors"
                   >
                     <Pencil className="w-4 h-4" />
                   </button>
@@ -279,7 +280,7 @@ export default function ItemsManager({ restaurantId, restaurantSlug, categories,
                     onClick={() => handleDelete(item.id)}
                     disabled={deletingId === item.id}
                     title="Excluir"
-                    className="p-2 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                    className="p-2 text-stone-400 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
                   >
                     {deletingId === item.id
                       ? <Loader2 className="w-4 h-4 animate-spin" />

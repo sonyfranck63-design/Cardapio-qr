@@ -101,15 +101,15 @@ export default function QRCodeDisplay({ url, restaurantName }: QRCodeDisplayProp
 
       {/* Link do Cardápio */}
       <div className="w-full">
-        <p className="text-xs text-gray-500 mb-2 text-center">Link público do cardápio</p>
-        <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-3 py-2.5">
-          <span className="flex-1 text-xs text-gray-300 truncate font-mono">{url}</span>
+        <p className="text-xs text-stone-500 mb-2 text-center font-medium">Link público do cardápio</p>
+        <div className="flex items-center gap-2 bg-stone-50 border border-stone-200 rounded-xl px-3 py-2.5">
+          <span className="flex-1 text-xs text-stone-700 truncate font-mono">{url}</span>
           <button
             onClick={handleCopyLink}
-            className="text-gray-400 hover:text-brand-400 transition-colors flex-shrink-0 p-1"
+            className="text-stone-400 hover:text-brand-600 transition-colors flex-shrink-0 p-1"
             title="Copiar link"
           >
-            {copied ? <Check className="w-4 h-4 text-brand-400" /> : <Copy className="w-4 h-4" />}
+            {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
           </button>
         </div>
       </div>
@@ -118,7 +118,7 @@ export default function QRCodeDisplay({ url, restaurantName }: QRCodeDisplayProp
       <div className="w-full space-y-2.5">
         <button
           onClick={() => setIsTableTentOpen(true)}
-          className="btn-primary w-full justify-center py-3 text-sm font-semibold flex items-center gap-2 shadow-brand"
+          className="btn-primary w-full justify-center py-3 text-sm font-semibold flex items-center gap-2 shadow-sm"
         >
           <Printer className="w-4 h-4" />
           Imprimir Placa de Mesa (A5/A6)
@@ -127,19 +127,19 @@ export default function QRCodeDisplay({ url, restaurantName }: QRCodeDisplayProp
         <div className="grid grid-cols-2 gap-2">
           <button
             onClick={handleDownloadPNG}
-            className="px-3 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-gray-200 flex items-center justify-center gap-1.5 transition-colors"
+            className="px-3 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200/80 border border-stone-200 text-xs font-semibold text-stone-700 flex items-center justify-center gap-1.5 transition-colors"
             title="Download PNG em Alta Resolução (1200x1200px)"
           >
-            <ImageIcon className="w-3.5 h-3.5 text-brand-400" />
+            <ImageIcon className="w-3.5 h-3.5 text-brand-600" />
             PNG Alta Res (1200px)
           </button>
 
           <button
             onClick={handleDownloadSVG}
-            className="px-3 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-gray-200 flex items-center justify-center gap-1.5 transition-colors"
+            className="px-3 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200/80 border border-stone-200 text-xs font-semibold text-stone-700 flex items-center justify-center gap-1.5 transition-colors"
             title="Download Vetorial SVG"
           >
-            <FileCode className="w-3.5 h-3.5 text-emerald-400" />
+            <FileCode className="w-3.5 h-3.5 text-emerald-600" />
             SVG Vetorial
           </button>
         </div>

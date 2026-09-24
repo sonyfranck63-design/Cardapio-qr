@@ -12,7 +12,6 @@ import {
   Lightbulb,
   Palette,
   Phone,
-  Printer,
   ChevronRight,
 } from 'lucide-react'
 import Link from 'next/link'
@@ -62,7 +61,7 @@ export default async function AdminDashboard() {
       title: 'Identidade & Tema',
       description: 'Envie seu logotipo ou imagem de capa e escolha as cores',
       done: Boolean(restaurant.logo_url || restaurant.cover_url),
-      href: '/admin/settings',
+      href: '/admin/restaurant',
       icon: Palette,
     },
     {
@@ -86,7 +85,7 @@ export default async function AdminDashboard() {
       title: 'Configurar Pedidos no WhatsApp',
       description: 'Receba os pedidos dos clientes diretamente no seu número',
       done: Boolean(restaurant.whatsapp),
-      href: '/admin/settings',
+      href: '/admin/restaurant',
       icon: Phone,
     },
   ]
@@ -95,14 +94,14 @@ export default async function AdminDashboard() {
   const isSetupComplete = completedStepsCount === steps.length
 
   return (
-    <div className="space-y-8 animate-fade-in text-stone-100">
+    <div className="space-y-8 animate-fade-in text-stone-900 font-sans">
       {/* Cabeçalho */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-stone-950 tracking-tight">
             {restaurant.name}
           </h1>
-          <p className="text-stone-400 text-sm mt-1">
+          <p className="text-stone-500 text-sm mt-1">
             Resumo do cardápio e gestão do estabelecimento.
           </p>
         </div>
@@ -111,28 +110,28 @@ export default async function AdminDashboard() {
           href={menuUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-200 hover:text-white border border-stone-700 text-xs font-semibold transition-colors self-start sm:self-auto"
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-stone-100 text-stone-800 border border-stone-300 text-xs font-semibold transition-colors shadow-2xs self-start sm:self-auto"
         >
-          <ExternalLink className="w-3.5 h-3.5" />
-          Abrir Cardápio Público
+          <ExternalLink className="w-3.5 h-3.5 text-stone-500" />
+          <span>Abrir Cardápio Público</span>
         </a>
       </div>
 
       {/* Alerta de Assinatura */}
       {isExpired && (
-        <div className="p-5 rounded-2xl bg-red-500/10 border border-red-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="p-5 rounded-2xl bg-red-50 border border-red-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start gap-3">
-            <AlertTriangle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
+            <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
             <div>
-              <p className="font-semibold text-red-300 text-sm">Assinatura Vencida • Cardápio Temporariamente Suspenso</p>
-              <p className="text-xs text-red-200/80 mt-0.5">
+              <p className="font-bold text-red-900 text-sm">Assinatura Vencida • Cardápio Temporariamente Suspenso</p>
+              <p className="text-xs text-red-700 mt-0.5">
                 Seus clientes não conseguem visualizar o cardápio pelo QR Code. Regularize sua mensalidade para reativar o acesso.
               </p>
             </div>
           </div>
           <Link
             href="/admin/subscription"
-            className="btn-primary bg-red-600 hover:bg-red-700 text-xs px-4 py-2.5 font-semibold shrink-0 text-center"
+            className="btn-primary bg-red-700 hover:bg-red-800 text-xs px-4 py-2 font-semibold shrink-0 text-center"
           >
             Pagar Mensalidade ({formatPlanPrice()})
           </Link>
@@ -140,21 +139,23 @@ export default async function AdminDashboard() {
       )}
 
       {isTrial && (
-        <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="p-4 sm:p-5 rounded-2xl bg-amber-50 border border-amber-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start gap-3">
-            <Lightbulb className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+            <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
+              <Lightbulb className="w-4 h-4" />
+            </div>
             <div>
-              <p className="font-semibold text-amber-300 text-sm">
+              <p className="font-bold text-amber-950 text-sm">
                 Período de Avaliação: {daysRemaining} {daysRemaining === 1 ? 'dia restante' : 'dias restantes'}
               </p>
-              <p className="text-xs text-amber-200/80 mt-0.5">
-                Você pode utilizar todos os recursos normalmente. Ative sua assinatura para não ter interrupções.
+              <p className="text-xs text-amber-800 mt-0.5">
+                Você pode utilizar todos os recursos normalmente. Ative sua assinatura para garantir a continuidade.
               </p>
             </div>
           </div>
           <Link
             href="/admin/subscription"
-            className="text-xs font-semibold text-amber-300 hover:text-white bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 px-3.5 py-2 rounded-xl transition-colors shrink-0 text-center"
+            className="inline-flex items-center justify-center text-xs font-bold text-amber-950 bg-amber-200/80 hover:bg-amber-300 border border-amber-300 px-4 py-2 rounded-xl transition-colors shrink-0 text-center"
           >
             Assinar Plano Pro
           </Link>
@@ -162,61 +163,60 @@ export default async function AdminDashboard() {
       )}
 
       {isActive && (
-        <div className="p-3.5 px-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between text-xs">
-          <div className="flex items-center gap-2 text-emerald-400 font-medium">
-            <CheckCircle2 className="w-4 h-4 shrink-0" />
+        <div className="p-3.5 px-4 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2 text-emerald-900 font-semibold">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
             <span>Assinatura Ativa • Renovação automática em {expiresDate.toLocaleDateString('pt-BR')}</span>
           </div>
-          <Link href="/admin/subscription" className="text-stone-400 hover:text-white transition-colors underline">
+          <Link href="/admin/subscription" className="text-emerald-800 hover:text-emerald-950 font-medium transition-colors underline">
             Gerenciar
           </Link>
         </div>
       )}
 
-      {/* Checklist de Primeiros Passos (Exibido enquanto a configuração não for 100% concluída) */}
+      {/* Checklist de Primeiros Passos */}
       {!isSetupComplete && (
-        <div className="admin-card p-6 border-orange-500/30 bg-orange-950/10">
-          <div className="flex items-center justify-between mb-4">
+        <div className="admin-card p-6 border-orange-200 bg-orange-50/40">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
             <div>
-              <h2 className="text-base font-bold text-white">Primeiros passos para colocar seu cardápio no ar</h2>
-              <p className="text-xs text-stone-400 mt-0.5">
+              <h2 className="text-base font-bold text-stone-900">Primeiros passos para colocar seu cardápio no ar</h2>
+              <p className="text-xs text-stone-600 mt-0.5">
                 Conclua as etapas abaixo para ter um cardápio completo e atraente para seus clientes.
               </p>
             </div>
-            <span className="text-xs font-bold text-orange-400 bg-orange-500/15 px-2.5 py-1 rounded-full border border-orange-500/30">
+            <span className="text-xs font-bold text-orange-900 bg-orange-100 border border-orange-200 px-3 py-1 rounded-full self-start sm:self-auto">
               {completedStepsCount} de {steps.length} concluídos
             </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
             {steps.map((step) => {
-              const Icon = step.icon
               return (
                 <Link
                   key={step.id}
                   href={step.href}
                   className={`flex items-start gap-3 p-3.5 rounded-xl border transition-all ${
                     step.done
-                      ? 'border-emerald-500/20 bg-emerald-950/10 opacity-75'
-                      : 'border-white/10 bg-white/5 hover:border-orange-500/40 hover:bg-white/10'
+                      ? 'border-emerald-200 bg-emerald-50/60 opacity-80'
+                      : 'border-stone-200 bg-white hover:border-orange-300 hover:shadow-xs'
                   }`}
                 >
                   <div className="mt-0.5 shrink-0">
                     {step.done ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
                     ) : (
-                      <Circle className="w-4 h-4 text-stone-500" />
+                      <Circle className="w-4 h-4 text-stone-400" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className={`text-xs sm:text-sm font-semibold ${step.done ? 'text-stone-300 line-through' : 'text-white'}`}>
+                    <h3 className={`text-xs sm:text-sm font-semibold ${step.done ? 'text-stone-500 line-through' : 'text-stone-900'}`}>
                       {step.title}
                     </h3>
-                    <p className="text-[11px] sm:text-xs text-stone-400 mt-0.5 line-clamp-1">
+                    <p className="text-[11px] sm:text-xs text-stone-500 mt-0.5 line-clamp-1">
                       {step.description}
                     </p>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-stone-500 shrink-0 self-center" />
+                  <ChevronRight className="w-4 h-4 text-stone-400 shrink-0 self-center" />
                 </Link>
               )
             })}
@@ -227,56 +227,54 @@ export default async function AdminDashboard() {
       {/* Estatísticas Rápidas */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="admin-card p-5">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-9 h-9 bg-orange-500/15 rounded-xl flex items-center justify-center">
-              <Tag className="w-4 h-4 text-orange-400" />
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-9 h-9 bg-orange-100 text-orange-800 rounded-xl flex items-center justify-center font-bold">
+              <Tag className="w-4 h-4" />
             </div>
-            <p className="text-sm text-stone-400 font-medium">Categorias</p>
+            <p className="text-xs uppercase tracking-wider font-semibold text-stone-500">Categorias</p>
           </div>
-          <p className="text-3xl font-extrabold text-white">{categoriesCount ?? 0}</p>
-          <Link href="/admin/categories" className="text-xs text-orange-400 hover:text-orange-300 transition-colors mt-2 inline-block">
+          <p className="text-3xl font-extrabold text-stone-950 tabular-nums">{categoriesCount ?? 0}</p>
+          <Link href="/admin/categories" className="text-xs font-semibold text-orange-700 hover:text-orange-800 transition-colors mt-2 inline-block">
             Gerenciar categorias &rarr;
           </Link>
         </div>
 
         <div className="admin-card p-5">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-9 h-9 bg-emerald-500/15 rounded-xl flex items-center justify-center">
-              <Eye className="w-4 h-4 text-emerald-400" />
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-9 h-9 bg-emerald-100 text-emerald-800 rounded-xl flex items-center justify-center font-bold">
+              <Eye className="w-4 h-4" />
             </div>
-            <p className="text-sm text-stone-400 font-medium">Pratos Ativos</p>
+            <p className="text-xs uppercase tracking-wider font-semibold text-stone-500">Pratos Ativos</p>
           </div>
-          <p className="text-3xl font-extrabold text-white">{activeItemsCount ?? 0}</p>
-          <Link href="/admin/items" className="text-xs text-emerald-400 hover:text-emerald-300 transition-colors mt-2 inline-block">
+          <p className="text-3xl font-extrabold text-stone-950 tabular-nums">{activeItemsCount ?? 0}</p>
+          <Link href="/admin/items" className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 transition-colors mt-2 inline-block">
             Gerenciar pratos &rarr;
           </Link>
         </div>
 
         <div className="admin-card p-5">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-9 h-9 bg-stone-700/30 rounded-xl flex items-center justify-center">
-              <EyeOff className="w-4 h-4 text-stone-400" />
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-9 h-9 bg-stone-100 text-stone-700 rounded-xl flex items-center justify-center font-bold">
+              <EyeOff className="w-4 h-4" />
             </div>
-            <p className="text-sm text-stone-400 font-medium">Pratos Esgotados / Inativos</p>
+            <p className="text-xs uppercase tracking-wider font-semibold text-stone-500">Esgotados / Inativos</p>
           </div>
-          <p className="text-3xl font-extrabold text-white">{inactiveItemsCount ?? 0}</p>
-          <Link href="/admin/items" className="text-xs text-stone-400 hover:text-stone-300 transition-colors mt-2 inline-block">
+          <p className="text-3xl font-extrabold text-stone-950 tabular-nums">{inactiveItemsCount ?? 0}</p>
+          <Link href="/admin/items" className="text-xs font-semibold text-stone-600 hover:text-stone-900 transition-colors mt-2 inline-block">
             Ver itens inativos &rarr;
           </Link>
         </div>
       </div>
 
-      {/* Grid Principal: QR Code & Ações */}
+      {/* Grid Principal: QR Code & Ações Rápidas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* QR Code e Plaquinha de Mesa */}
         <div className="admin-card p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-lg font-bold text-white">QR Code & Plaquinhas de Mesa</h2>
-              <p className="text-xs text-stone-400 mt-0.5">
-                Exporte em alta resolução ou imprima diretamente o display para as mesas.
-              </p>
-            </div>
+          <div className="mb-4">
+            <h2 className="text-lg font-bold text-stone-900 tracking-tight">QR Code & Plaquinhas de Mesa</h2>
+            <p className="text-xs text-stone-500 mt-0.5">
+              Exporte em alta resolução ou imprima diretamente o display para as mesas.
+            </p>
           </div>
           <QRCodeDisplay url={menuUrl} restaurantName={restaurant.name} />
         </div>
@@ -284,56 +282,58 @@ export default async function AdminDashboard() {
         {/* Ações Rápidas & Dica Operacional */}
         <div className="space-y-4">
           <div className="admin-card p-6">
-            <h2 className="text-lg font-bold text-white mb-4">Ações Rápidas</h2>
+            <h2 className="text-lg font-bold text-stone-900 mb-4 tracking-tight">Ações Rápidas</h2>
             <div className="space-y-3">
               <Link
                 href="/admin/items"
-                className="flex items-center gap-3.5 p-3.5 rounded-xl bg-orange-500/10 border border-orange-500/20 hover:bg-orange-500/15 transition-colors group"
+                className="flex items-center gap-3.5 p-3.5 rounded-xl bg-orange-50/70 border border-orange-200/80 hover:bg-orange-100/70 transition-colors group"
               >
-                <div className="w-9 h-9 bg-orange-500/20 rounded-lg flex items-center justify-center group-hover:bg-orange-500/30 transition-colors shrink-0">
-                  <UtensilsCrossed className="w-4 h-4 text-orange-400" />
+                <div className="w-9 h-9 bg-orange-100 text-orange-800 rounded-lg flex items-center justify-center shrink-0">
+                  <UtensilsCrossed className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="font-semibold text-white text-sm">Adicionar Prato ou Bebida</p>
-                  <p className="text-xs text-stone-400">Cadastre fotos, descrições e valores</p>
+                  <p className="font-bold text-stone-900 text-sm">Adicionar Prato ou Bebida</p>
+                  <p className="text-xs text-stone-500">Cadastre fotos, descrições e valores</p>
                 </div>
               </Link>
 
               <Link
                 href="/admin/categories"
-                className="flex items-center gap-3.5 p-3.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors group"
+                className="flex items-center gap-3.5 p-3.5 rounded-xl bg-stone-50 border border-stone-200 hover:bg-stone-100 transition-colors group"
               >
-                <div className="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center shrink-0">
-                  <Tag className="w-4 h-4 text-stone-300" />
+                <div className="w-9 h-9 bg-white border border-stone-200 rounded-lg flex items-center justify-center shrink-0 text-stone-700">
+                  <Tag className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="font-semibold text-white text-sm">Organizar Categorias</p>
-                  <p className="text-xs text-stone-400">Defina a ordem de exibição no cardápio</p>
+                  <p className="font-bold text-stone-900 text-sm">Organizar Categorias</p>
+                  <p className="text-xs text-stone-500">Defina a ordem de exibição no cardápio</p>
                 </div>
               </Link>
 
               <Link
-                href="/admin/settings"
-                className="flex items-center gap-3.5 p-3.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors group"
+                href="/admin/restaurant"
+                className="flex items-center gap-3.5 p-3.5 rounded-xl bg-stone-50 border border-stone-200 hover:bg-stone-100 transition-colors group"
               >
-                <div className="w-9 h-9 bg-white/10 rounded-lg flex items-center justify-center shrink-0">
-                  <Palette className="w-4 h-4 text-stone-300" />
+                <div className="w-9 h-9 bg-white border border-stone-200 rounded-lg flex items-center justify-center shrink-0 text-stone-700">
+                  <Palette className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="font-semibold text-white text-sm">Ajustar Tema & Identidade</p>
-                  <p className="text-xs text-stone-400">Fontes, capa, horários e WhatsApp</p>
+                  <p className="font-bold text-stone-900 text-sm">Ajustar Tema & Identidade</p>
+                  <p className="text-xs text-stone-500">Fontes, capa, horários e WhatsApp</p>
                 </div>
               </Link>
             </div>
           </div>
 
-          {/* Dica Operacional Profissional */}
-          <div className="p-4 rounded-xl bg-stone-900 border border-stone-800 flex items-start gap-3">
-            <Lightbulb className="w-5 h-5 text-orange-400 shrink-0 mt-0.5" />
+          {/* Dica Operacional */}
+          <div className="p-4 rounded-xl bg-orange-50/60 border border-orange-200/80 flex items-start gap-3">
+            <div className="w-7 h-7 rounded-lg bg-orange-100 text-orange-800 flex items-center justify-center shrink-0 font-bold">
+              <Lightbulb className="w-4 h-4" />
+            </div>
             <div>
-              <p className="text-xs font-bold text-stone-200 mb-1">Dica de Atendimento</p>
-              <p className="text-xs text-stone-400 leading-relaxed">
-                Pratos sem fotografia são automaticamente apresentados com o design impresso clássico pontilhado de bistrô, mantendo o cardápio sempre sofisticado.
+              <p className="text-xs font-bold text-orange-950 mb-0.5">Dica de Cardápio</p>
+              <p className="text-xs text-stone-600 leading-relaxed">
+                Pratos sem fotografia são automaticamente apresentados com o design impresso clássico pontilhado de bistrô, mantendo o cardápio sempre harmonioso.
               </p>
             </div>
           </div>

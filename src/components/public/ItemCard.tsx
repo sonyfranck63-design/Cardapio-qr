@@ -98,6 +98,7 @@ export default function ItemCard({ item, whatsappNumber }: ItemCardProps) {
             className={`object-cover transition-transform duration-300 group-hover:scale-105 ${
               isSoldOut ? 'grayscale' : ''
             }`}
+            unoptimized
             onError={() => setImageError(true)}
           />
           {isSoldOut && (

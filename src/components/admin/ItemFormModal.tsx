@@ -48,7 +48,7 @@ export default function ItemFormModal({
       name: item?.name ?? '',
       description: item?.description ?? '',
       price: item?.price?.toString().replace('.', ',') ?? '',
-      category_id: item?.category_id ?? '',
+      category_id: item?.category_id ?? (categories[0]?.id || ''),
       is_active: item?.is_active ?? true,
     },
   })
@@ -78,112 +78,129 @@ export default function ItemFormModal({
     }
 
     setUploadingImage(true)
-    const compressed = await compressImage(file, { maxWidth: 1200, maxHeight: 1200, quality: 0.8 })
-    const fileName = `${restaurantId}/items/${Date.now()}.webp`
+    try {
+      const compressed = await compressImage(file, { maxWidth: 1000, maxHeight: 1000, quality: 0.85 })
+      const fileName = `${restaurantId}/items/${Date.now()}.webp`
 
-    const { error: uploadError } = await supabase.storage
-      .from('restaurant-assets')
-      .upload(fileName, compressed, { upsert: true, contentType: 'image/webp' })
+      const { error: uploadError } = await supabase.storage
+        .from('restaurant-assets')
+        .upload(fileName, compressed, { upsert: true, contentType: 'image/webp' })
 
-    if (uploadError) {
-      toast.error('Erro ao enviar imagem')
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('restaurant-assets')
+        .getPublicUrl(fileName)
+
+      setImageUrl(publicUrl)
+      toast.success('Imagem enviada com sucesso!')
+    } catch {
+      toast.error('Erro ao fazer upload da imagem')
+    } finally {
       setUploadingImage(false)
-      return
     }
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('restaurant-assets')
-      .getPublicUrl(fileName)
-
-    setImageUrl(publicUrl)
-    setUploadingImage(false)
-    toast.success('Imagem enviada!')
   }
 
   async function onSubmit(data: ItemFormData) {
-    const price = parseFloat(data.price.replace(',', '.'))
+    const numericPrice = parseFloat(data.price.replace(',', '.'))
 
-    const payload = {
-      restaurant_id: restaurantId,
-      category_id: data.category_id,
-      name: data.name,
-      description: data.description || null,
-      price,
-      image_url: imageUrl,
-      is_active: data.is_active,
-    }
-
-    let result
-    if (isEditing) {
+    if (isEditing && item) {
       const { data: updated, error } = await supabase
         .from('menu_items')
-        .update(payload)
-        .eq('id', item!.id)
+        .update({
+          name: data.name,
+          description: data.description || null,
+          price: numericPrice,
+          category_id: data.category_id,
+          image_url: imageUrl,
+          is_active: data.is_active,
+        })
+        .eq('id', item.id)
         .select()
         .single()
 
-      if (error) { toast.error('Erro ao salvar item'); return }
-      result = updated
-    } else {
-      // Busca o maior order existente na categoria para colocar o novo item no final
-      const { data: lastItem } = await supabase
-        .from('menu_items')
-        .select('order')
-        .eq('category_id', data.category_id)
-        .order('order', { ascending: false })
-        .limit(1)
-        .maybeSingle()
+      if (error) {
+        toast.error('Erro ao atualizar item')
+        return
+      }
 
-      const nextOrder = (lastItem?.order ?? -1) + 1
-
-      const { data: created, error } = await supabase
-        .from('menu_items')
-        .insert({ ...payload, order: nextOrder })
-        .select()
-        .single()
-
-      if (error) { toast.error('Erro ao criar item'); return }
-      result = created
+      toast.success('Item atualizado com sucesso!')
+      onSaved(updated)
+      return
     }
 
-    toast.success(isEditing ? 'Item atualizado!' : 'Item criado!')
-    onSaved(result)
+    // Para novo item: busca a ordem máxima atual da categoria
+    const { data: catItems } = await supabase
+      .from('menu_items')
+      .select('order')
+      .eq('category_id', data.category_id)
+      .order('order', { ascending: false })
+      .limit(1)
+
+    const nextOrder = catItems && catItems.length > 0 ? catItems[0].order + 1 : 0
+
+    const { data: created, error } = await supabase
+      .from('menu_items')
+      .insert({
+        restaurant_id: restaurantId,
+        category_id: data.category_id,
+        name: data.name,
+        description: data.description || null,
+        price: numericPrice,
+        image_url: imageUrl,
+        is_active: data.is_active,
+        order: nextOrder,
+      })
+      .select()
+      .single()
+
+    if (error) {
+      toast.error('Erro ao criar item')
+      return
+    }
+
+    toast.success('Item criado com sucesso!')
+    onSaved(created)
   }
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 font-sans text-stone-900"
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-xs" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative w-full sm:max-w-lg bg-gray-900 border border-gray-800 rounded-t-3xl sm:rounded-2xl overflow-hidden animate-slide-up max-h-[95vh] flex flex-col">
+      <div className="relative w-full sm:max-w-lg bg-white border border-stone-200 rounded-t-3xl sm:rounded-2xl overflow-hidden animate-slide-up max-h-[92vh] flex flex-col shadow-2xl">
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b border-gray-800 flex-shrink-0">
-          <h2 className="text-lg font-semibold text-white">
-            {isEditing ? 'Editar item' : 'Novo item'}
+        <div className="flex items-center justify-between p-5 border-b border-stone-200 shrink-0">
+          <h2 className="text-lg font-bold text-stone-900">
+            {isEditing ? 'Editar Prato / Item' : 'Novo Prato ou Bebida'}
           </h2>
-          <button onClick={onClose} className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-xl transition-colors">
+          <button
+            onClick={onClose}
+            className="p-1.5 text-stone-400 hover:text-stone-900 hover:bg-stone-100 rounded-xl transition-colors"
+            aria-label="Fechar"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Form */}
+        {/* Formulário */}
         <form onSubmit={handleSubmit(onSubmit)} className="overflow-y-auto flex-1">
           <div className="p-5 space-y-4">
-            {/* Image upload */}
+            {/* Upload de Imagem */}
             <div>
-              <label className="input-label">Foto do item</label>
+              <label className="input-label">Fotografia do prato (Opcional)</label>
               <div
-                className="relative w-full h-40 bg-white/5 border-2 border-dashed border-white/10 rounded-xl flex items-center justify-center cursor-pointer hover:border-brand-500/40 hover:bg-brand-500/5 transition-all overflow-hidden"
+                className="relative w-full h-40 bg-stone-50 border-2 border-dashed border-stone-300 rounded-xl flex items-center justify-center cursor-pointer hover:border-orange-500 hover:bg-orange-50/20 transition-all overflow-hidden"
                 onClick={() => fileInputRef.current?.click()}
               >
                 {uploadingImage ? (
-                  <div className="flex flex-col items-center gap-2 text-gray-400">
-                    <Loader2 className="w-8 h-8 animate-spin text-brand-400" />
-                    <span className="text-sm">Enviando...</span>
+                  <div className="flex flex-col items-center gap-2 text-stone-500">
+                    <Loader2 className="w-8 h-8 animate-spin text-orange-700" />
+                    <span className="text-xs font-semibold">Otimizando e enviando foto...</span>
                   </div>
                 ) : imageUrl ? (
                   <>
@@ -193,10 +210,10 @@ export default function ItemFormModal({
                     </div>
                   </>
                 ) : (
-                  <div className="flex flex-col items-center gap-2 text-gray-500">
-                    <ImageIcon className="w-10 h-10" />
-                    <span className="text-sm">Clique para adicionar foto</span>
-                    <span className="text-xs text-gray-600">JPG, PNG, WebP — Máx. 5MB</span>
+                  <div className="flex flex-col items-center gap-1.5 text-stone-400 p-4 text-center">
+                    <ImageIcon className="w-8 h-8 text-stone-400" />
+                    <span className="text-xs font-bold text-stone-700">Clique para adicionar uma foto</span>
+                    <span className="text-[11px] text-stone-400">JPG, PNG ou WebP — Pratos sem foto usam o estilo clássico pontilhado</span>
                   </div>
                 )}
               </div>
@@ -211,33 +228,39 @@ export default function ItemFormModal({
                 <button
                   type="button"
                   onClick={() => setImageUrl(null)}
-                  className="text-xs text-red-400 hover:text-red-300 mt-1.5 flex items-center gap-1 transition-colors"
+                  className="text-xs text-red-600 hover:text-red-800 mt-1.5 flex items-center gap-1 font-medium transition-colors"
                 >
-                  <X className="w-3 h-3" /> Remover foto
+                  <X className="w-3.5 h-3.5" /> Remover foto
                 </button>
               )}
             </div>
 
-            {/* Name */}
+            {/* Nome */}
             <div>
               <label htmlFor="item-name" className="input-label">Nome do item *</label>
-              <input id="item-name" type="text" placeholder="Ex: X-Burguer Especial" className="input-field" {...register('name')} />
-              {errors.name && <p className="mt-1.5 text-xs text-red-400">{errors.name.message}</p>}
+              <input
+                id="item-name"
+                type="text"
+                placeholder="Ex: Burger Artesanal de Costela"
+                className="input-field"
+                {...register('name')}
+              />
+              {errors.name && <p className="mt-1 text-xs text-red-600 font-medium">{errors.name.message}</p>}
             </div>
 
-            {/* Description */}
+            {/* Descrição */}
             <div>
-              <label htmlFor="item-description" className="input-label">Descrição</label>
+              <label htmlFor="item-description" className="input-label">Descrição e ingredientes</label>
               <textarea
                 id="item-description"
                 rows={2}
-                placeholder="Ingredientes, observações..."
+                placeholder="Ex: Pão brioche, 180g de burger de costela, queijo cheddar derretido e maionese artesanal da casa."
                 className="input-field resize-none"
                 {...register('description')}
               />
             </div>
 
-            {/* Price + Category */}
+            {/* Preço e Categoria */}
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label htmlFor="item-price" className="input-label">Preço (R$) *</label>
@@ -249,44 +272,61 @@ export default function ItemFormModal({
                   className="input-field"
                   {...register('price')}
                 />
-                {errors.price && <p className="mt-1.5 text-xs text-red-400">{errors.price.message}</p>}
+                {errors.price && <p className="mt-1 text-xs text-red-600 font-medium">{errors.price.message}</p>}
               </div>
 
               <div>
                 <label htmlFor="item-category" className="input-label">Categoria *</label>
-                <select id="item-category" className="input-field" {...register('category_id')}>
-                  <option value="">Selecionar...</option>
-                  {categories.map(cat => (
-                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                <select
+                  id="item-category"
+                  className="input-field bg-white"
+                  {...register('category_id')}
+                >
+                  {categories.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
                   ))}
                 </select>
-                {errors.category_id && <p className="mt-1.5 text-xs text-red-400">{errors.category_id.message}</p>}
+                {errors.category_id && (
+                  <p className="mt-1 text-xs text-red-600 font-medium">{errors.category_id.message}</p>
+                )}
               </div>
             </div>
 
-            {/* Active toggle */}
-            <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/10">
-              <div>
-                <p className="text-sm font-medium text-gray-200">Item ativo</p>
-                <p className="text-xs text-gray-500">Itens inativos não aparecem no cardápio</p>
-              </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" className="sr-only peer" {...register('is_active')} />
-                <div className="w-11 h-6 bg-gray-700 peer-focus:ring-2 peer-focus:ring-brand-500/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-500"></div>
+            {/* Status Ativo / Inativo */}
+            <div className="pt-2">
+              <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  {...register('is_active')}
+                  className="w-4 h-4 rounded border-stone-300 text-orange-700 focus:ring-orange-600"
+                />
+                <span className="text-xs sm:text-sm font-semibold text-stone-800">
+                  Item disponível para pedidos no cardápio
+                </span>
               </label>
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="p-5 border-t border-gray-800 flex gap-3 flex-shrink-0">
-            <button type="button" onClick={onClose} className="btn-secondary flex-1 justify-center">
+          {/* Footer do Modal */}
+          <div className="p-4 bg-stone-50 border-t border-stone-200 flex items-center justify-end gap-2.5">
+            <button
+              type="button"
+              onClick={onClose}
+              className="btn-secondary text-xs px-4 py-2"
+            >
               Cancelar
             </button>
-            <button type="submit" disabled={isSubmitting} className="btn-primary flex-1 justify-center">
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="btn-primary text-xs px-5 py-2"
+            >
               {isSubmitting ? (
-                <><Loader2 className="w-4 h-4 animate-spin" />Salvando...</>
+                <><Loader2 className="w-4 h-4 animate-spin" /> Salvando...</>
               ) : (
-                isEditing ? 'Salvar' : 'Criar item'
+                isEditing ? 'Atualizar Prato' : 'Adicionar Prato'
               )}
             </button>
           </div>

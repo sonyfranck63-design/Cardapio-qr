@@ -123,6 +123,7 @@ export default function ItemDetailModal({
               sizes="(max-width: 640px) 100vw, 512px"
               className={`object-cover ${isSoldOut ? 'grayscale opacity-75' : ''}`}
               priority
+              unoptimized
             />
             {isSoldOut && (
               <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
