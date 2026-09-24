@@ -120,23 +120,13 @@ export default function ItemDetailModal({
 
         {/* Imagem em Destaque */}
         {hasImage && !imageError ? (
-          <div className="relative w-full h-64 sm:h-72 bg-stone-900/5 shrink-0 overflow-hidden flex items-center justify-center">
-            {/* Fundo com desfoque atmosférico para fotos de qualquer proporção */}
-            <Image
-              src={item.image_url!}
-              alt=""
-              fill
-              className="object-cover blur-xl opacity-30 scale-110 pointer-events-none select-none"
-              aria-hidden="true"
-              unoptimized
-            />
-            {/* Foto principal inteira sem corte (ideal para latas, garrafas e pratos) */}
+          <div className="relative w-full h-64 sm:h-72 bg-stone-200 shrink-0 overflow-hidden">
             <Image
               src={item.image_url!}
               alt={item.name}
               fill
               sizes="(max-width: 640px) 100vw, 512px"
-              className={`object-contain p-3 sm:p-4 z-10 ${isSoldOut ? 'grayscale opacity-75' : ''}`}
+              className={`object-cover ${isSoldOut ? 'grayscale opacity-75' : ''}`}
               priority
               unoptimized
               onError={() => setImageError(true)}

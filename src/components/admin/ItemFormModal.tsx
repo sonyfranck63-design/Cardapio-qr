@@ -210,25 +210,15 @@ export default function ItemFormModal({
                     <span className="text-xs font-semibold">Otimizando e enviando foto...</span>
                   </div>
                 ) : imageUrl ? (
-                  <div className="relative w-full h-full flex items-center justify-center bg-stone-900/5">
-                    {/* Fundo suave para não deixar bordas secas em fotos verticais */}
-                    <Image
-                      src={imageUrl}
-                      alt=""
-                      fill
-                      className="object-cover blur-md opacity-20 pointer-events-none"
-                      aria-hidden="true"
-                      unoptimized
-                    />
-                    {/* Imagem inteira com object-contain (mostra garrafas, latas e pratos completos) */}
+                  <div className="relative w-full h-full">
                     <Image
                       src={imageUrl}
                       alt="Preview do item"
                       fill
-                      className="object-contain p-2 z-10"
+                      className="object-cover"
                       unoptimized
                     />
-                    <div className="absolute inset-0 bg-black/40 z-20 flex flex-col items-center justify-center opacity-0 hover:opacity-100 transition-opacity gap-1 text-white">
+                    <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 hover:opacity-100 transition-opacity gap-1 text-white">
                       <Upload className="w-6 h-6" />
                       <span className="text-xs font-semibold">Clique para trocar a foto</span>
                     </div>
