@@ -35,7 +35,15 @@ export async function getCachedMenuData(slug: string): Promise<CachedMenuResult>
           whatsapp,
           whatsapp_message,
           subscription_status,
-          subscription_expires_at
+          subscription_expires_at,
+          theme_color,
+          theme_font,
+          cover_url,
+          tagline,
+          address,
+          opening_hours,
+          instagram,
+          show_sold_out
         `)
         .eq('slug', targetSlug)
         .maybeSingle()

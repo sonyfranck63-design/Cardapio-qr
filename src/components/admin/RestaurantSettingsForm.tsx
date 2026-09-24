@@ -5,16 +5,37 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import toast from 'react-hot-toast'
-import { Loader2, Upload, X, Save, Phone, Link as LinkIcon, Trash2, AlertTriangle } from 'lucide-react'
+import {
+  Loader2,
+  Upload,
+  X,
+  Save,
+  Phone,
+  Link as LinkIcon,
+  Trash2,
+  AlertTriangle,
+  Palette,
+  Type,
+  ImageIcon,
+  MapPin,
+  Clock,
+  Instagram,
+  Eye,
+} from 'lucide-react'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 import { Restaurant } from '@/types/database'
 import { slugify } from '@/lib/utils'
 import { useRouter } from 'next/navigation'
 import { revalidateMenuAction } from '@/app/actions/revalidate'
-
 import { RESERVED_SLUGS } from '@/lib/plans'
 import { compressImage } from '@/lib/image-compress'
+import {
+  THEME_FONTS,
+  PRESET_THEME_COLORS,
+  ThemeFontType,
+  getContrastColor,
+} from '@/lib/theme'
 
 const restaurantSchema = z.object({
   name: z.string().min(2, 'Nome deve ter ao menos 2 caracteres'),
@@ -32,6 +53,16 @@ const restaurantSchema = z.object({
     .optional()
     .refine(v => !v || /^\d{10,15}$/.test(v.replace(/\D/g, '')), 'Número inválido'),
   whatsapp_message: z.string().optional(),
+  theme_color: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/, 'Cor inválida (use formato #HEX de 6 dígitos)')
+    .default('#1c1917'),
+  theme_font: z.enum(['classico', 'moderno', 'boteco']).default('moderno'),
+  tagline: z.string().max(120, 'Máximo de 120 caracteres').optional(),
+  address: z.string().max(200, 'Máximo de 200 caracteres').optional(),
+  opening_hours: z.string().max(100, 'Máximo de 100 caracteres').optional(),
+  instagram: z.string().max(50, 'Máximo de 50 caracteres').optional(),
+  show_sold_out: z.boolean().default(false),
 })
 
 type RestaurantForm = z.infer<typeof restaurantSchema>
@@ -43,12 +74,18 @@ interface RestaurantSettingsFormProps {
 export default function RestaurantSettingsForm({ restaurant }: RestaurantSettingsFormProps) {
   const router = useRouter()
   const supabase = createClient()
+
   const [logoUrl, setLogoUrl] = useState<string | null>(restaurant.logo_url)
+  const [coverUrl, setCoverUrl] = useState<string | null>(restaurant.cover_url)
   const [uploadingLogo, setUploadingLogo] = useState(false)
+  const [uploadingCover, setUploadingCover] = useState(false)
+
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteConfirmText, setDeleteConfirmText] = useState('')
   const [isDeletingAccount, setIsDeletingAccount] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const logoInputRef = useRef<HTMLInputElement>(null)
+  const coverInputRef = useRef<HTMLInputElement>(null)
 
   const {
     register,
@@ -63,10 +100,19 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
       slug: restaurant.slug,
       whatsapp: restaurant.whatsapp ?? '',
       whatsapp_message: restaurant.whatsapp_message ?? 'Olá! Gostaria de fazer um pedido.',
+      theme_color: restaurant.theme_color ?? '#1c1917',
+      theme_font: (restaurant.theme_font as ThemeFontType) || 'moderno',
+      tagline: restaurant.tagline ?? '',
+      address: restaurant.address ?? '',
+      opening_hours: restaurant.opening_hours ?? '',
+      instagram: restaurant.instagram ?? '',
+      show_sold_out: restaurant.show_sold_out ?? false,
     },
   })
 
   const nameValue = watch('name')
+  const themeColorValue = watch('theme_color')
+  const themeFontValue = watch('theme_font')
 
   function handleAutoSlug() {
     if (nameValue) {
@@ -78,43 +124,64 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
     const file = e.target.files?.[0]
     if (!file) return
 
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif']
-    if (!allowedTypes.includes(file.type.toLowerCase())) {
-      toast.error('Formato inválido. Use JPG, PNG, WEBP ou GIF.')
-      return
-    }
-
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error('Imagem deve ter no máximo 2MB')
-      return
-    }
-
     setUploadingLogo(true)
-    const compressed = await compressImage(file, { maxWidth: 800, maxHeight: 800, quality: 0.85 })
-    const fileName = `${restaurant.id}/logo.webp`
+    try {
+      const compressed = await compressImage(file, { maxWidth: 800, maxHeight: 800, quality: 0.85 })
+      const fileName = `${restaurant.id}/logo.webp`
 
-    const { error: uploadError } = await supabase.storage
-      .from('restaurant-assets')
-      .upload(fileName, compressed, { upsert: true, contentType: 'image/webp' })
+      const { error: uploadError } = await supabase.storage
+        .from('restaurant-assets')
+        .upload(fileName, compressed, { upsert: true, contentType: 'image/webp' })
 
-    if (uploadError) {
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('restaurant-assets')
+        .getPublicUrl(fileName)
+
+      const urlWithCache = `${publicUrl}?t=${Date.now()}`
+      setLogoUrl(urlWithCache)
+
+      await supabase.from('restaurants').update({ logo_url: publicUrl }).eq('id', restaurant.id)
+      await revalidateMenuAction({ slug: restaurant.slug, restaurantId: restaurant.id })
+      toast.success('Logo atualizada com sucesso!')
+    } catch {
       toast.error('Erro ao fazer upload da logo')
+    } finally {
       setUploadingLogo(false)
-      return
     }
+  }
 
-    const { data: { publicUrl } } = supabase.storage
-      .from('restaurant-assets')
-      .getPublicUrl(fileName)
+  async function handleCoverUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
 
-    // Adiciona timestamp para forçar recarregamento
-    const urlWithCache = `${publicUrl}?t=${Date.now()}`
-    setLogoUrl(urlWithCache)
+    setUploadingCover(true)
+    try {
+      const compressed = await compressImage(file, { maxWidth: 1200, maxHeight: 600, quality: 0.85 })
+      const fileName = `${restaurant.id}/cover.webp`
 
-    await supabase.from('restaurants').update({ logo_url: publicUrl }).eq('id', restaurant.id)
-    await revalidateMenuAction({ slug: restaurant.slug, restaurantId: restaurant.id })
-    toast.success('Logo atualizada!')
-    setUploadingLogo(false)
+      const { error: uploadError } = await supabase.storage
+        .from('restaurant-assets')
+        .upload(fileName, compressed, { upsert: true, contentType: 'image/webp' })
+
+      if (uploadError) throw uploadError
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('restaurant-assets')
+        .getPublicUrl(fileName)
+
+      const urlWithCache = `${publicUrl}?t=${Date.now()}`
+      setCoverUrl(urlWithCache)
+
+      await supabase.from('restaurants').update({ cover_url: publicUrl }).eq('id', restaurant.id)
+      await revalidateMenuAction({ slug: restaurant.slug, restaurantId: restaurant.id })
+      toast.success('Capa atualizada com sucesso!')
+    } catch {
+      toast.error('Erro ao fazer upload da imagem de capa')
+    } finally {
+      setUploadingCover(false)
+    }
   }
 
   async function handleDeleteAccount() {
@@ -122,10 +189,7 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
 
     try {
       setIsDeletingAccount(true)
-      const res = await fetch('/api/account/delete', {
-        method: 'POST',
-      })
-
+      const res = await fetch('/api/account/delete', { method: 'POST' })
       const data = await res.json()
 
       if (!res.ok || !data.success) {
@@ -145,7 +209,7 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
   }
 
   async function onSubmit(data: RestaurantForm) {
-    // Verificar se slug já existe (de outro restaurante)
+    // Verificar se slug já existe em outro restaurante
     const { data: existing } = await supabase
       .from('restaurants')
       .select('id')
@@ -154,7 +218,7 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
       .maybeSingle()
 
     if (existing) {
-      toast.error('Esse slug já está em uso. Escolha outro.')
+      toast.error('Esse slug já está em uso por outro restaurante. Escolha outro.')
       return
     }
 
@@ -165,6 +229,13 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
         slug: data.slug,
         whatsapp: data.whatsapp || null,
         whatsapp_message: data.whatsapp_message || null,
+        theme_color: data.theme_color,
+        theme_font: data.theme_font,
+        tagline: data.tagline || null,
+        address: data.address || null,
+        opening_hours: data.opening_hours || null,
+        instagram: data.instagram ? data.instagram.replace(/^@/, '') : null,
+        show_sold_out: data.show_sold_out,
       })
       .eq('id', restaurant.id)
 
@@ -173,7 +244,7 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
       return
     }
 
-    // Revalidação sob demanda: revalida slug novo e slug antigo se tiver mudado
+    // Revalidação sob demanda imediata
     await revalidateMenuAction({ slug: data.slug, restaurantId: restaurant.id })
     if (data.slug !== restaurant.slug) {
       await revalidateMenuAction({ slug: restaurant.slug })
@@ -183,73 +254,254 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
     router.refresh()
   }
 
+  const contrastColor = getContrastColor(themeColorValue)
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-      {/* Logo */}
-      <div className="admin-card p-6">
-        <h2 className="text-base font-semibold text-white mb-4">Logo do restaurante</h2>
-        <div className="flex items-center gap-5">
-          <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden flex-shrink-0">
-            {logoUrl ? (
-              <Image
-                src={logoUrl}
-                alt="Logo"
-                width={80}
-                height={80}
-                className="object-cover w-full h-full"
-                unoptimized
-              />
-            ) : (
-              <Upload className="w-6 h-6 text-gray-500" />
-            )}
+      {/* 1. Imagens: Logo e Imagem de Capa */}
+      <div className="admin-card p-6 space-y-6">
+        <h2 className="text-base font-semibold text-white flex items-center gap-2">
+          <ImageIcon className="w-4 h-4 text-orange-400" />
+          Identidade Visual (Logo e Capa)
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Logo */}
+          <div className="space-y-3">
+            <label className="text-xs font-medium text-gray-300">Logo do restaurante (1:1)</label>
+            <div className="flex items-center gap-4">
+              <div className="w-20 h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
+                {logoUrl ? (
+                  <Image
+                    src={logoUrl}
+                    alt="Logo"
+                    width={80}
+                    height={80}
+                    className="object-cover w-full h-full"
+                    unoptimized
+                  />
+                ) : (
+                  <Upload className="w-6 h-6 text-gray-500" />
+                )}
+              </div>
+              <div>
+                <input
+                  ref={logoInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoUpload}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => logoInputRef.current?.click()}
+                  disabled={uploadingLogo}
+                  className="btn-secondary text-xs px-3 py-1.5"
+                >
+                  {uploadingLogo ? (
+                    <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Enviando...</>
+                  ) : (
+                    <><Upload className="w-3.5 h-3.5" /> Escolher logo</>
+                  )}
+                </button>
+                <p className="text-[11px] text-gray-500 mt-1.5">Recomendado: 400x400px</p>
+                {logoUrl && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await supabase.from('restaurants').update({ logo_url: null }).eq('id', restaurant.id)
+                      setLogoUrl(null)
+                      toast.success('Logo removida')
+                    }}
+                    className="text-xs text-red-400 hover:text-red-300 mt-1 flex items-center gap-1 transition-colors"
+                  >
+                    <X className="w-3 h-3" /> Remover logo
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
-          <div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleLogoUpload}
-              className="hidden"
-              id="logo-upload"
-            />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={uploadingLogo}
-              className="btn-secondary text-sm"
-            >
-              {uploadingLogo ? (
-                <><Loader2 className="w-4 h-4 animate-spin" />Enviando...</>
-              ) : (
-                <><Upload className="w-4 h-4" />Enviar logo</>
-              )}
-            </button>
-            <p className="text-xs text-gray-500 mt-2">PNG, JPG ou WebP. Máximo 2MB.</p>
-            {logoUrl && (
-              <button
-                type="button"
-                onClick={async () => {
-                  await supabase.from('restaurants').update({ logo_url: null }).eq('id', restaurant.id)
-                  setLogoUrl(null)
-                  toast.success('Logo removida')
-                }}
-                className="text-xs text-red-400 hover:text-red-300 mt-1 flex items-center gap-1 transition-colors"
-              >
-                <X className="w-3 h-3" /> Remover logo
-              </button>
-            )}
+
+          {/* Imagem de Capa (Banner) */}
+          <div className="space-y-3">
+            <label className="text-xs font-medium text-gray-300">Imagem de capa / Banner panorâmico</label>
+            <div className="flex items-center gap-4">
+              <div className="w-32 h-20 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden shrink-0 relative">
+                {coverUrl ? (
+                  <Image
+                    src={coverUrl}
+                    alt="Capa"
+                    fill
+                    className="object-cover"
+                    unoptimized
+                  />
+                ) : (
+                  <ImageIcon className="w-6 h-6 text-gray-500" />
+                )}
+              </div>
+              <div>
+                <input
+                  ref={coverInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleCoverUpload}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => coverInputRef.current?.click()}
+                  disabled={uploadingCover}
+                  className="btn-secondary text-xs px-3 py-1.5"
+                >
+                  {uploadingCover ? (
+                    <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Enviando...</>
+                  ) : (
+                    <><Upload className="w-3.5 h-3.5" /> Escolher capa</>
+                  )}
+                </button>
+                <p className="text-[11px] text-gray-500 mt-1.5">Recomendado: 1200x500px</p>
+                {coverUrl && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await supabase.from('restaurants').update({ cover_url: null }).eq('id', restaurant.id)
+                      setCoverUrl(null)
+                      toast.success('Capa removida')
+                    }}
+                    className="text-xs text-red-400 hover:text-red-300 mt-1 flex items-center gap-1 transition-colors"
+                  >
+                    <X className="w-3 h-3" /> Remover capa
+                  </button>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Informações */}
+      {/* 2. Personalização Visual: Cores e Fontes */}
+      <div className="admin-card p-6 space-y-6">
+        <h2 className="text-base font-semibold text-white flex items-center gap-2">
+          <Palette className="w-4 h-4 text-orange-400" />
+          Tema & Estilo Visual
+        </h2>
+
+        {/* Seleção de Tipografia */}
+        <div className="space-y-3">
+          <label className="input-label flex items-center gap-1.5">
+            <Type className="w-4 h-4 text-gray-400" />
+            Família Tipográfica
+          </label>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {(Object.keys(THEME_FONTS) as ThemeFontType[]).map((fontKey) => {
+              const option = THEME_FONTS[fontKey]
+              const isSelected = themeFontValue === fontKey
+              return (
+                <button
+                  key={fontKey}
+                  type="button"
+                  onClick={() => setValue('theme_font', fontKey)}
+                  className={`p-3.5 rounded-xl border text-left transition-all ${
+                    isSelected
+                      ? 'border-orange-500 bg-orange-500/10 ring-1 ring-orange-500'
+                      : 'border-white/10 bg-white/5 hover:bg-white/10'
+                  }`}
+                >
+                  <div className="text-sm font-semibold text-white mb-1">{option.name}</div>
+                  <div className="text-xs text-gray-400 mb-2">{option.description}</div>
+                  <div className={`text-xs text-orange-300 ${option.fontClass}`}>
+                    &ldquo;{option.sampleText}&rdquo;
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Seleção de Cor Tema */}
+        <div className="space-y-3">
+          <label className="input-label">Cor de Destaque do Cabeçalho</label>
+          <div className="flex flex-wrap items-center gap-2.5">
+            {PRESET_THEME_COLORS.map(preset => (
+              <button
+                key={preset.hex}
+                type="button"
+                onClick={() => setValue('theme_color', preset.hex)}
+                className={`w-9 h-9 rounded-xl border-2 transition-transform ${preset.bgClass} ${
+                  themeColorValue.toLowerCase() === preset.hex.toLowerCase()
+                    ? 'border-white scale-110 shadow-lg'
+                    : 'border-transparent hover:scale-105 opacity-80 hover:opacity-100'
+                }`}
+                title={preset.name}
+              />
+            ))}
+
+            {/* Seletor Customizado */}
+            <div className="flex items-center gap-2 ml-2 pl-3 border-l border-white/10">
+              <input
+                type="color"
+                id="theme_color_picker"
+                value={themeColorValue}
+                onChange={e => setValue('theme_color', e.target.value)}
+                className="w-9 h-9 rounded-xl cursor-pointer bg-transparent border-0"
+              />
+              <span className="text-xs font-mono text-gray-400">{themeColorValue}</span>
+            </div>
+          </div>
+
+          {/* Prévia de contraste WCAG */}
+          <div
+            className="p-3 rounded-xl border flex items-center justify-between mt-2"
+            style={{ backgroundColor: themeColorValue, color: contrastColor }}
+          >
+            <span className="text-xs font-semibold">Prévia de Contraste Automático</span>
+            <span className="text-[11px] font-mono opacity-80">
+              Texto: {contrastColor === '#ffffff' ? 'Branco' : 'Escuro'} (WCAG AA Aprovado)
+            </span>
+          </div>
+        </div>
+
+        {/* Opção de Exibir Esgotados */}
+        <div className="pt-2 border-t border-white/10">
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              {...register('show_sold_out')}
+              className="mt-1 w-4 h-4 rounded border-gray-700 text-orange-600 focus:ring-orange-500 bg-gray-900"
+            />
+            <div>
+              <span className="text-sm font-medium text-white">
+                Exibir itens esgotados no cardápio
+              </span>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Quando ativado, pratos desativados continuam visíveis com o selo &ldquo;Esgotado&rdquo;. Quando desativado, eles ficam ocultos.
+              </p>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      {/* 3. Informações da Casa */}
       <div className="admin-card p-6 space-y-5">
-        <h2 className="text-base font-semibold text-white">Informações</h2>
+        <h2 className="text-base font-semibold text-white">Informações Principais</h2>
 
         <div>
           <label htmlFor="name" className="input-label">Nome do restaurante</label>
           <input id="name" type="text" className="input-field" {...register('name')} />
           {errors.name && <p className="mt-1.5 text-xs text-red-400">{errors.name.message}</p>}
+        </div>
+
+        <div>
+          <label htmlFor="tagline" className="input-label">Slogan / Frase Curta</label>
+          <input
+            id="tagline"
+            type="text"
+            placeholder="Ex: Culinária artesanal, cortes nobres e cerveja gelada"
+            className="input-field"
+            {...register('tagline')}
+          />
+          {errors.tagline && <p className="mt-1.5 text-xs text-red-400">{errors.tagline.message}</p>}
+          <p className="text-xs text-gray-500 mt-1">Exibido logo abaixo do nome do restaurante.</p>
         </div>
 
         <div>
@@ -264,7 +516,7 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
             <button
               type="button"
               onClick={handleAutoSlug}
-              className="btn-secondary text-xs px-3 whitespace-nowrap flex-shrink-0"
+              className="btn-secondary text-xs px-3 whitespace-nowrap shrink-0"
             >
               Gerar
             </button>
@@ -273,54 +525,106 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
             <p className="mt-1.5 text-xs text-red-400">{errors.slug.message}</p>
           ) : (
             <p className="mt-1.5 text-xs text-gray-500">
-              cardapioqr.com/<span className="text-brand-400">{watch('slug')}</span>
+              cardapioqr.com/<span className="text-orange-400">{watch('slug')}</span>
             </p>
           )}
         </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label htmlFor="opening_hours" className="input-label flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-gray-400" />
+              Horário de Funcionamento
+            </label>
+            <input
+              id="opening_hours"
+              type="text"
+              placeholder="Ex: Ter a Dom: 18h às 23h30"
+              className="input-field"
+              {...register('opening_hours')}
+            />
+            {errors.opening_hours && <p className="mt-1.5 text-xs text-red-400">{errors.opening_hours.message}</p>}
+          </div>
+
+          <div>
+            <label htmlFor="instagram" className="input-label flex items-center gap-1.5">
+              <Instagram className="w-3.5 h-3.5 text-gray-400" />
+              Perfil do Instagram
+            </label>
+            <div className="relative">
+              <span className="absolute left-3.5 top-3 text-sm text-gray-500">@</span>
+              <input
+                id="instagram"
+                type="text"
+                placeholder="seu_restaurante"
+                className="input-field pl-8"
+                {...register('instagram')}
+              />
+            </div>
+            {errors.instagram && <p className="mt-1.5 text-xs text-red-400">{errors.instagram.message}</p>}
+          </div>
+        </div>
+
+        <div>
+          <label htmlFor="address" className="input-label flex items-center gap-1.5">
+            <MapPin className="w-3.5 h-3.5 text-gray-400" />
+            Endereço Completo
+          </label>
+          <input
+            id="address"
+            type="text"
+            placeholder="Ex: Rua dos Pinheiros, 450 - Pinheiros, São Paulo"
+            className="input-field"
+            {...register('address')}
+          />
+          {errors.address && <p className="mt-1.5 text-xs text-red-400">{errors.address.message}</p>}
+          <p className="text-xs text-gray-500 mt-1">Cria automaticamente um link que abre no Google Maps.</p>
+        </div>
       </div>
 
-      {/* WhatsApp */}
+      {/* 4. WhatsApp */}
       <div className="admin-card p-6 space-y-5">
         <h2 className="text-base font-semibold text-white flex items-center gap-2">
           <Phone className="w-4 h-4 text-green-400" />
-          WhatsApp
+          Atendimento & Pedidos no WhatsApp
         </h2>
 
         <div>
-          <label htmlFor="whatsapp" className="input-label">Número do WhatsApp</label>
+          <label htmlFor="whatsapp" className="input-label">Número do WhatsApp Comercial</label>
           <input
             id="whatsapp"
             type="tel"
-            placeholder="55119XXXXXXXX (com código do país)"
+            placeholder="55119XXXXXXXX (com código 55 do Brasil)"
             className="input-field"
             {...register('whatsapp')}
           />
           {errors.whatsapp && <p className="mt-1.5 text-xs text-red-400">{errors.whatsapp.message}</p>}
-          <p className="mt-1.5 text-xs text-gray-500">Formato: 5511999999999 (55 + DDD + número)</p>
+          <p className="mt-1.5 text-xs text-gray-500">Exemplo: 5511999998888 (55 + DDD + número com 9)</p>
         </div>
 
         <div>
-          <label htmlFor="whatsapp_message" className="input-label">Mensagem padrão</label>
+          <label htmlFor="whatsapp_message" className="input-label">Mensagem Padrão de Pedido</label>
           <textarea
             id="whatsapp_message"
-            rows={3}
+            rows={2}
             placeholder="Olá! Gostaria de fazer um pedido."
             className="input-field resize-none"
             {...register('whatsapp_message')}
           />
-          <p className="mt-1.5 text-xs text-gray-500">Mensagem que o cliente enviará ao clicar no botão WhatsApp</p>
+          <p className="mt-1.5 text-xs text-gray-500">Mensagem inicial quando o cliente clica no botão fixo do cardápio</p>
         </div>
       </div>
 
-      <button type="submit" disabled={isSubmitting} className="btn-primary">
+      {/* Botão de Salvar */}
+      <button type="submit" disabled={isSubmitting} className="btn-primary w-full sm:w-auto">
         {isSubmitting ? (
-          <><Loader2 className="w-4 h-4 animate-spin" />Salvando...</>
+          <><Loader2 className="w-4 h-4 animate-spin" /> Salvando configurações...</>
         ) : (
-          <><Save className="w-4 h-4" />Salvar configurações</>
+          <><Save className="w-4 h-4" /> Salvar todas as configurações</>
         )}
       </button>
 
-      {/* Zona de Perigo: Exclusão de Conta */}
+      {/* Zona de Perigo */}
       <div className="border border-red-500/20 bg-red-500/5 rounded-2xl p-6 space-y-4 mt-12">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center text-red-400 shrink-0">

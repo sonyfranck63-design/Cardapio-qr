@@ -1,13 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --brand: #f97316;
-    --brand-dark: #ea580c;
+    --brand: #c2410c;
+    --brand-dark: #9a3412;
     --brand-light: #fed7aa;
   }
 
@@ -106,7 +104,31 @@
   }
 
   .shadow-brand {
-    box-shadow: 0 8px 32px rgba(249, 115, 22, 0.25);
+    box-shadow: 0 8px 32px rgba(194, 65, 12, 0.25);
+  }
+
+  /* Linha pontilhada clássica para pratos sem foto */
+  .dotted-leader {
+    display: flex;
+    align-items: baseline;
+    width: 100%;
+  }
+
+  .dotted-leader::after {
+    content: "";
+    flex-grow: 1;
+    border-bottom: 1.5px dotted currentColor;
+    margin: 0 0.5rem;
+    opacity: 0.3;
+  }
+
+  /* Safe area para smartphones modernos */
+  .pb-safe {
+    padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+  }
+
+  .bottom-safe {
+    bottom: max(1.5rem, env(safe-area-inset-bottom));
   }
 }
 

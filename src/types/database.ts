@@ -22,6 +22,14 @@ export interface Database {
           subscription_plan: string
           subscription_expires_at: string
           mercadopago_payment_id: string | null
+          theme_color: string | null
+          theme_font: 'classico' | 'moderno' | 'boteco' | null
+          cover_url: string | null
+          tagline: string | null
+          address: string | null
+          opening_hours: string | null
+          instagram: string | null
+          show_sold_out: boolean
           created_at: string
         }
         Insert: {
@@ -36,6 +44,14 @@ export interface Database {
           subscription_plan?: string
           subscription_expires_at?: string
           mercadopago_payment_id?: string | null
+          theme_color?: string | null
+          theme_font?: 'classico' | 'moderno' | 'boteco' | null
+          cover_url?: string | null
+          tagline?: string | null
+          address?: string | null
+          opening_hours?: string | null
+          instagram?: string | null
+          show_sold_out?: boolean
           created_at?: string
         }
         Update: {
@@ -50,6 +66,14 @@ export interface Database {
           subscription_plan?: string
           subscription_expires_at?: string
           mercadopago_payment_id?: string | null
+          theme_color?: string | null
+          theme_font?: 'classico' | 'moderno' | 'boteco' | null
+          cover_url?: string | null
+          tagline?: string | null
+          address?: string | null
+          opening_hours?: string | null
+          instagram?: string | null
+          show_sold_out?: boolean
           created_at?: string
         }
         Relationships: {
@@ -172,4 +196,12 @@ export type PublicRestaurant = Pick<
   | 'whatsapp_message'
   | 'subscription_status'
   | 'subscription_expires_at'
+  | 'theme_color'
+  | 'theme_font'
+  | 'cover_url'
+  | 'tagline'
+  | 'address'
+  | 'opening_hours'
+  | 'instagram'
+  | 'show_sold_out'
 >

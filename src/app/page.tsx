@@ -1,131 +1,154 @@
 import Link from 'next/link'
-import { QrCode, Smartphone, Zap, Check, ChevronRight, Star, Sparkles } from 'lucide-react'
-import { PLAN_PRICE } from '@/lib/plans'
+import Image from 'next/image'
+import {
+  QrCode,
+  Smartphone,
+  Check,
+  ChevronRight,
+  ShieldCheck,
+  Zap,
+  Printer,
+  SlidersHorizontal,
+} from 'lucide-react'
+import { PLAN_PRICE, formatPlanPrice } from '@/lib/plans'
+
+export const metadata = {
+  title: 'CardápioQR — O Cardápio Digital por QR Code para Bares e Restaurantes',
+  description:
+    'Substitua cardápios impressos e PDFs lentos por um cardápio digital rápido, elegante e direto no celular dos seus clientes. Teste 7 dias grátis.',
+}
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 overflow-x-hidden">
-      {/* Navbar */}
-      <nav className="fixed top-0 inset-x-0 z-50 border-b border-white/5 bg-gray-950/80 backdrop-blur-xl">
+    <div className="min-h-screen bg-[#faf8f5] text-stone-900 font-sans selection:bg-orange-100 selection:text-orange-950">
+      {/* Barra de Navegação */}
+      <nav className="fixed top-0 inset-x-0 z-50 border-b border-stone-200/80 bg-[#faf8f5]/90 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center">
-              <QrCode className="w-5 h-5 text-white" />
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 bg-stone-900 rounded-lg flex items-center justify-center text-white shadow-sm">
+              <QrCode className="w-5 h-5" />
             </div>
-            <span className="font-bold text-lg">CardápioQR</span>
+            <span className="font-bold text-lg tracking-tight text-stone-900">CardápioQR</span>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Link href="/demo" className="text-xs sm:text-sm font-semibold text-amber-400 hover:text-amber-300 flex items-center gap-1 transition-colors">
-              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
-              <span className="hidden sm:inline">Ver </span>Demo
+
+          <div className="flex items-center gap-3">
+            <Link
+              href="/demo"
+              className="text-xs sm:text-sm font-semibold text-stone-700 hover:text-stone-950 transition-colors px-2 py-1"
+            >
+              Ver Demo ao Vivo
             </Link>
-            <Link href="/auth/login" className="text-xs sm:text-sm text-gray-400 hover:text-white transition-colors px-1 sm:px-2 py-1">
+            <Link
+              href="/auth/login"
+              className="text-xs sm:text-sm text-stone-600 hover:text-stone-950 transition-colors px-2 py-1"
+            >
               Entrar
             </Link>
-            <Link href="/auth/register" className="btn-primary text-xs sm:text-sm px-2.5 sm:px-4 py-2 shrink-0">
-              <span className="hidden sm:inline">Testar </span>7 dias grátis
+            <Link
+              href="/auth/register"
+              className="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-orange-700 hover:bg-orange-800 text-white font-semibold text-xs sm:text-sm transition-all shadow-sm active:scale-95"
+            >
+              Testar 7 dias grátis
             </Link>
           </div>
         </div>
       </nav>
 
-      {/* Hero */}
-      <section className="pt-32 pb-20 px-4 sm:px-6 relative">
-        {/* Background glow */}
-        <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="max-w-4xl mx-auto text-center relative">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-brand-500/30 bg-brand-500/10 text-brand-400 text-sm font-medium mb-8 animate-fade-in">
-            <Zap className="w-4 h-4" />
-            Cardápio pronto em menos de 5 minutos • 7 dias de teste grátis
+      {/* Hero Section */}
+      <section className="pt-28 pb-16 sm:pt-36 sm:pb-20 px-4 sm:px-6">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-stone-300 bg-white text-stone-700 text-xs font-semibold mb-6 shadow-xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+            Sem necessidade de baixar aplicativo • Abre instantâneo no celular
           </div>
 
-          <h1 className="text-4xl sm:text-6xl font-bold leading-tight mb-6 animate-slide-up">
-            Seu cardápio digital{' '}
-            <span className="text-gradient">via QR Code</span>{' '}
-            sem complicação
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-stone-950 tracking-tight leading-[1.15] mb-6">
+            O cardápio digital que valoriza seus pratos e agiliza suas vendas
           </h1>
 
-          <p className="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-10 animate-slide-up">
-            Crie categorias, adicione itens com fotos e preços, e compartilhe com seus clientes
-            através de um QR Code gerado automaticamente. Simples assim.
+          <p className="text-base sm:text-xl text-stone-600 max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed">
+            Elimine PDFs lentos e reimpressões caras. Disponibilize fotos apetitosas, atualize preços em segundos e receba pedidos no WhatsApp com uma plaquinha QR Code na mesa.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-slide-up">
-            <Link href="/demo" className="btn-primary text-base px-8 py-3.5 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 shadow-lg shadow-orange-500/25">
-              <Sparkles className="w-5 h-5 text-amber-200" />
-              Ver Cardápio de Demonstração (Ao Vivo)
+          <div className="flex flex-col sm:flex-row gap-3.5 justify-center items-center">
+            <Link
+              href="/auth/register"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-stone-900 hover:bg-black text-white text-base font-semibold transition-all shadow-md active:scale-95"
+            >
+              Criar meu cardápio grátis
+              <ChevronRight className="w-4 h-4" />
             </Link>
-            <Link href="/auth/register" className="btn-secondary text-base px-6 py-3.5">
-              Começar teste grátis de 7 dias
-              <ChevronRight className="w-5 h-5" />
+            <Link
+              href="/demo"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-white hover:bg-stone-100 text-stone-800 border border-stone-300 text-base font-semibold transition-all active:scale-95"
+            >
+              Explorar demonstração ao vivo
             </Link>
           </div>
+
+          <p className="text-xs text-stone-500 mt-4">
+            Teste completo por 7 dias • Sem cadastro de cartão de crédito no início
+          </p>
         </div>
       </section>
 
-      {/* Preview mockup */}
-      <section className="pb-24 px-4 sm:px-6">
+      {/* Mockup Real do Produto (Visualização Celular + Plaquinha) */}
+      <section className="pb-20 px-4 sm:px-6">
         <div className="max-w-5xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Admin preview */}
-            <div className="glass-card p-6 animate-fade-in">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-3 h-3 rounded-full bg-red-500" />
-                <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                <div className="w-3 h-3 rounded-full bg-green-500" />
-                <span className="ml-2 text-xs text-gray-500">Painel Admin</span>
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-center bg-white border border-stone-200 rounded-3xl p-6 sm:p-10 shadow-sm">
+            {/* Coluna da Esquerda: Plaquinha de Mesa */}
+            <div className="md:col-span-5 flex flex-col items-center justify-center text-center p-6 bg-stone-50 rounded-2xl border border-stone-200">
+              <span className="text-xs font-bold uppercase tracking-wider text-orange-800 bg-orange-100 px-3 py-1 rounded-full mb-4">
+                Plaquinha de Mesa A5/A6
+              </span>
+              <div className="w-44 h-44 bg-white p-3 rounded-2xl border-2 border-stone-800 shadow-md flex flex-col items-center justify-center mb-4">
+                <QrCode className="w-32 h-32 text-stone-900" />
+                <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wider mt-1">
+                  Mesa 04 • CardápioQR
+                </span>
               </div>
-              <div className="space-y-3">
-                <div className="h-8 bg-brand-500/20 rounded-lg w-3/4" />
-                <div className="grid grid-cols-3 gap-3">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="h-20 bg-white/5 rounded-xl border border-white/10" />
-                  ))}
-                </div>
-                <div className="space-y-2">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="flex items-center gap-3 p-3 bg-white/5 rounded-xl">
-                      <div className="w-10 h-10 bg-brand-500/20 rounded-lg flex-shrink-0" />
-                      <div className="flex-1 space-y-1.5">
-                        <div className="h-3 bg-white/10 rounded w-2/3" />
-                        <div className="h-2.5 bg-white/5 rounded w-1/3" />
-                      </div>
-                      <div className="w-10 h-5 bg-brand-500/30 rounded-full" />
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <h3 className="text-base font-bold text-stone-900">Imprima direto do painel</h3>
+              <p className="text-xs text-stone-600 mt-1 max-w-xs">
+                O sistema gera plaquinhas prontas para impressão e display acrílico com número da mesa e QR Code de alta resolução.
+              </p>
             </div>
 
-            {/* Mobile preview */}
-            <div className="flex justify-center">
-              <div className="w-64 bg-white rounded-3xl shadow-2xl overflow-hidden border-4 border-gray-800">
-                <div className="h-8 bg-gray-100 flex items-center justify-center">
-                  <div className="w-20 h-4 bg-gray-300 rounded-full" />
-                </div>
-                <div className="bg-orange-500 p-4 text-white text-center">
-                  <div className="w-12 h-12 bg-white/20 rounded-full mx-auto mb-2" />
-                  <div className="h-3 bg-white/70 rounded w-2/3 mx-auto" />
-                  <div className="h-2 bg-white/50 rounded w-1/3 mx-auto mt-1" />
-                </div>
-                <div className="bg-gray-50 p-3">
-                  <div className="h-2.5 bg-gray-200 rounded w-1/3 mb-3" />
-                  <div className="space-y-2">
-                    {[1, 2, 3].map(i => (
-                      <div key={i} className="flex gap-2 bg-white rounded-xl p-2 shadow-sm">
-                        <div className="w-14 h-14 bg-orange-100 rounded-lg flex-shrink-0" />
-                        <div className="flex-1">
-                          <div className="h-2.5 bg-gray-200 rounded w-3/4 mb-1" />
-                          <div className="h-2 bg-gray-100 rounded w-full mb-2" />
-                          <div className="h-3 bg-orange-400 rounded w-1/3" />
-                        </div>
-                      </div>
-                    ))}
+            {/* Coluna da Direita: Cardápio Real no Celular */}
+            <div className="md:col-span-7 flex flex-col justify-center">
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-stone-500 mb-2">
+                <Smartphone className="w-4 h-4 text-orange-700" />
+                Experiência do Cliente
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-stone-900 leading-snug mb-3">
+                Interface leve, elegante e pensada para smartphones
+              </h2>
+              <p className="text-sm sm:text-base text-stone-600 leading-relaxed mb-6">
+                Seu cliente aponta a câmera do celular e o cardápio abre no mesmo segundo. Sem travar, com navegação suave por abas, fotos em alta definição e botão para enviar o pedido diretamente para o seu WhatsApp.
+              </p>
+
+              <div className="space-y-3">
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-stone-50 border border-stone-200/80">
+                  <div className="w-7 h-7 rounded-lg bg-orange-100 text-orange-800 flex items-center justify-center shrink-0 font-bold text-xs">
+                    1
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-stone-900">Personalização com a identidade da sua casa</h4>
+                    <p className="text-xs text-stone-600 mt-0.5">
+                      Escolha entre famílias de fontes clássicas, modernas ou de boteco, foto de capa e cores exclusivas.
+                    </p>
                   </div>
                 </div>
-                <div className="bg-green-500 p-2 text-white text-center text-xs font-medium">
-                  💬 Pedir pelo WhatsApp
+
+                <div className="flex items-start gap-3 p-3 rounded-xl bg-stone-50 border border-stone-200/80">
+                  <div className="w-7 h-7 rounded-lg bg-orange-100 text-orange-800 flex items-center justify-center shrink-0 font-bold text-xs">
+                    2
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-stone-900">Controle de pratos em falta com 1 clique</h4>
+                    <p className="text-xs text-stone-600 mt-0.5">
+                      Acabou um ingrediente no meio do turno? Marque como esgotado ou desative no painel na hora.
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -133,75 +156,125 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Features */}
-      <section className="py-20 px-4 sm:px-6 border-t border-white/5">
+      {/* Recursos Essenciais */}
+      <section className="py-16 sm:py-20 px-4 sm:px-6 bg-white border-y border-stone-200">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl sm:text-4xl font-bold text-center mb-4">
-            Tudo que você precisa, sem nada que você não precisa
-          </h2>
-          <p className="text-gray-400 text-center mb-14 max-w-xl mx-auto">
-            Simples para o dono, elegante para o cliente.
-          </p>
+          <div className="text-center max-w-2xl mx-auto mb-14">
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-stone-900 tracking-tight">
+              Construído para a rotina dinâmica de bares e restaurantes
+            </h2>
+            <p className="text-sm sm:text-base text-stone-600 mt-3">
+              Recursos objetivos que realmente fazem diferença no atendimento, sem complicação desnecessária.
+            </p>
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((f, i) => (
-              <div key={i} className="glass-card p-6 hover:border-brand-500/30 transition-colors duration-300 group">
-                <div className="w-12 h-12 bg-brand-500/15 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-brand-500/25 transition-colors">
-                  <f.icon className="w-6 h-6 text-brand-400" />
+            {features.map((feature, i) => (
+              <div
+                key={i}
+                className="p-6 rounded-2xl bg-stone-50 border border-stone-200/80 hover:border-stone-300 transition-colors"
+              >
+                <div className="w-10 h-10 rounded-xl bg-stone-900 text-white flex items-center justify-center mb-4">
+                  <feature.icon className="w-5 h-5" />
                 </div>
-                <h3 className="font-semibold text-white mb-2">{f.title}</h3>
-                <p className="text-sm text-gray-400 leading-relaxed">{f.description}</p>
+                <h3 className="text-base font-bold text-stone-900 mb-1.5">{feature.title}</h3>
+                <p className="text-xs sm:text-sm text-stone-600 leading-relaxed">{feature.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Pricing */}
+      {/* Preço Transparente */}
       <section className="py-20 px-4 sm:px-6">
-        <div className="max-w-md mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-2">Preço acessível para o seu negócio</h2>
-          <p className="text-gray-400 text-sm mb-6">Comece a testar hoje mesmo sem pagar nada adiantado.</p>
-          <div className="glass-card p-8 border-brand-500/30">
-            <div className="inline-block px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-semibold uppercase tracking-wider mb-4">
-              Plano Mensal Pro
+        <div className="max-w-lg mx-auto text-center">
+          <span className="text-xs font-bold uppercase tracking-wider text-orange-800 bg-orange-100 px-3 py-1 rounded-full">
+            Plano Único & Completo
+          </span>
+
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-stone-900 mt-4 mb-2">
+            Investimento acessível e transparente
+          </h2>
+          <p className="text-sm text-stone-600 mb-8">
+            Sem taxas por pedido. Sem fidelidade. Cancele quando quiser.
+          </p>
+
+          <div className="bg-white border-2 border-stone-900 rounded-3xl p-8 shadow-lg text-left">
+            <div className="flex items-baseline justify-between border-b border-stone-200 pb-6 mb-6">
+              <div>
+                <h3 className="text-lg font-bold text-stone-900">Assinatura Mensal Pro</h3>
+                <p className="text-xs text-stone-500 mt-0.5">Acesso total a todas as funcionalidades</p>
+              </div>
+              <div className="text-right">
+                <div className="text-3xl sm:text-4xl font-extrabold text-stone-900">
+                  {formatPlanPrice(PLAN_PRICE)}
+                </div>
+                <div className="text-xs text-stone-500">por mês</div>
+              </div>
             </div>
-            <div className="flex items-baseline justify-center gap-1 mb-2">
-              <span className="text-2xl font-bold text-gray-300">R$</span>
-              <span className="text-5xl font-extrabold text-white">{PLAN_PRICE.toFixed(2).replace('.', ',')}</span>
-              <span className="text-gray-400 text-sm">/mês</span>
+
+            <div className="mb-6">
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
+                <Check className="w-3.5 h-3.5 text-emerald-700" />
+                7 dias gratuitos de avaliação completa
+              </span>
             </div>
-            <p className="text-emerald-400 font-medium text-sm mb-8">
-              ✨ 7 dias de teste grátis • Cancele quando quiser
-            </p>
-            <ul className="space-y-3 text-left mb-8">
-              {freePlanFeatures.map((f, i) => (
-                <li key={i} className="flex items-center gap-3 text-sm text-gray-300">
-                  <Check className="w-4 h-4 text-brand-400 flex-shrink-0" />
-                  {f}
+
+            <ul className="space-y-3 mb-8">
+              {planBenefits.map((benefit, i) => (
+                <li key={i} className="flex items-center gap-3 text-xs sm:text-sm text-stone-700">
+                  <Check className="w-4 h-4 text-orange-700 shrink-0" />
+                  <span>{benefit}</span>
                 </li>
               ))}
             </ul>
-            <Link href="/auth/register" className="btn-primary w-full justify-center text-base py-3.5">
-              Começar 7 dias grátis
-              <ChevronRight className="w-5 h-5" />
+
+            <Link
+              href="/auth/register"
+              className="w-full inline-flex items-center justify-center gap-2 py-3.5 rounded-xl bg-orange-700 hover:bg-orange-800 text-white font-bold text-sm transition-all shadow-md active:scale-95"
+            >
+              Começar período grátis agora
+              <ChevronRight className="w-4 h-4" />
             </Link>
-            <p className="text-xs text-gray-500 mt-4">
-              Pagamento via PIX ou Cartão pelo Mercado Pago após o período de testes.
-            </p>
+
+            <div className="flex items-center justify-center gap-2 mt-4 text-[11px] text-stone-500">
+              <ShieldCheck className="w-3.5 h-3.5 text-stone-400" />
+              <span>Pagamento seguro via Mercado Pago (PIX e Cartão)</span>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-white/5 py-8 px-4 text-center text-sm text-gray-500">
-        <div className="flex items-center justify-center gap-2 mb-2">
-          <div className="w-6 h-6 bg-brand-500 rounded-md flex items-center justify-center">
-            <QrCode className="w-4 h-4 text-white" />
+      {/* Rodapé Institucional */}
+      <footer className="border-t border-stone-200 bg-white py-12 px-4 sm:px-6">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 bg-stone-900 rounded-md flex items-center justify-center text-white">
+              <QrCode className="w-4 h-4" />
+            </div>
+            <span className="font-bold text-base text-stone-900">CardápioQR</span>
+            <span className="text-xs text-stone-400 ml-2">SaaS para bares e restaurantes</span>
           </div>
-          <span className="font-semibold text-gray-400">CardápioQR</span>
+
+          <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-stone-600">
+            <Link href="/demo" className="hover:text-stone-950 transition-colors">
+              Demonstração
+            </Link>
+            <Link href="/termos" className="hover:text-stone-950 transition-colors">
+              Termos de Uso
+            </Link>
+            <Link href="/privacidade" className="hover:text-stone-950 transition-colors">
+              Política de Privacidade (LGPD)
+            </Link>
+            <Link href="/auth/login" className="hover:text-stone-950 transition-colors">
+              Área do Cliente
+            </Link>
+          </div>
+
+          <div className="text-xs text-stone-400 text-center md:text-right">
+            &copy; {new Date().getFullYear()} CardápioQR. Todos os direitos reservados.
+          </div>
         </div>
-        <p>Feito com 🧡 para bares e restaurantes brasileiros</p>
       </footer>
     </div>
   )
@@ -210,41 +283,43 @@ export default function LandingPage() {
 const features = [
   {
     icon: QrCode,
-    title: 'QR Code automático',
-    description: 'Gere e baixe seu QR Code em segundos. Imprima e coloque nas mesas.',
+    title: 'QR Code e Plaquinha de Mesa',
+    description: 'Exportação em SVG e PNG de alta qualidade e modelo de plaquinha A5/A6 pronto para imprimir.',
   },
   {
     icon: Smartphone,
-    title: 'Otimizado para celular',
-    description: 'Cardápio bonito e rápido em qualquer smartphone. Sem necessidade de app.',
+    title: 'Ultra-rápido no Smartphone',
+    description: 'Carregamento instantâneo via cache em memória, sem exigir aplicativo nem login dos seus clientes.',
   },
   {
     icon: Zap,
-    title: 'Ativar/desativar itens',
-    description: 'Item em falta? Desative com um clique e ele some do cardápio do cliente.',
+    title: 'WhatsApp Direto',
+    description: 'O cliente escolhe o prato e o botão envia o pedido formatado diretamente no WhatsApp da sua cozinha.',
   },
   {
-    icon: Star,
-    title: 'Fotos dos itens',
-    description: 'Faça upload das fotos dos seus pratos e deixe o cardápio irresistível.',
+    icon: SlidersHorizontal,
+    title: 'Personalização Visual',
+    description: 'Capa panorâmica, logotipo, cores institucionais e 3 tipografias selecionadas para cada estilo gastronômico.',
   },
   {
-    icon: Check,
-    title: 'Link único',
-    description: 'Cada restaurante tem seu link exclusivo: cardapioqr.com/seu-bar.',
+    icon: Printer,
+    title: 'Estilo Impresso para Pratos sem Foto',
+    description: 'Apresentação clássica com linhas pontilhadas de restaurante para pratos que não possuem fotografia.',
   },
   {
-    icon: ChevronRight,
-    title: 'Botão WhatsApp',
-    description: 'Botão fixo para o cliente chamar no WhatsApp e fazer o pedido.',
+    icon: ShieldCheck,
+    title: 'Controle de Esgotados',
+    description: 'Oculte ou destaque como esgotado os itens indisponíveis instantaneamente pelo seu celular.',
   },
 ]
 
-const freePlanFeatures = [
-  'Categorias ilimitadas',
-  'Itens ilimitados com fotos',
-  'QR Code para download',
-  'Link público personalizado',
-  'Botão WhatsApp integrado',
-  'Atualizações em tempo real',
+const planBenefits = [
+  'Categorias e pratos ilimitados',
+  'Upload e compressão automática de fotos em WebP',
+  'QR Code exclusivo em alta resolução (SVG e PNG)',
+  'Modelo de plaquinha de mesa para impressão',
+  'Integração direta com pedidos no WhatsApp',
+  'Personalização de tema, cores, logo e banner de capa',
+  'Endereço integrado com Google Maps e perfil do Instagram',
+  'Atualizações de preços em tempo real',
 ]

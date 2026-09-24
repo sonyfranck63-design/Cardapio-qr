@@ -15,8 +15,18 @@ CREATE TABLE IF NOT EXISTS public.restaurants (
   subscription_plan       TEXT DEFAULT 'mensal' NOT NULL,
   subscription_expires_at TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '7 days') NOT NULL,
   mercadopago_payment_id  TEXT,
+  theme_color             TEXT DEFAULT '#1c1917',
+  theme_font              TEXT DEFAULT 'moderno',
+  cover_url               TEXT,
+  tagline                 TEXT,
+  address                 TEXT,
+  opening_hours           TEXT,
+  instagram               TEXT,
+  show_sold_out           BOOLEAN DEFAULT false NOT NULL,
   created_at              TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   CONSTRAINT restaurants_slug_format_check CHECK (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$' AND length(slug) >= 3 AND length(slug) <= 50),
+  CONSTRAINT restaurants_theme_color_check CHECK (theme_color ~ '^#[0-9a-fA-F]{6}$'),
+  CONSTRAINT restaurants_theme_font_check CHECK (theme_font IN ('classico', 'moderno', 'boteco')),
   CONSTRAINT restaurants_slug_reserved_check CHECK (slug NOT IN (
     'admin', 'api', 'auth', 'demo', 'superadmin',
     'login', 'register', 'sitemap', 'robots', '_next',
@@ -334,3 +344,45 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- ============================================================
+-- PERMISSÕES DE COLUNAS (Column-Level Security)
+-- ============================================================
+REVOKE INSERT, UPDATE ON public.restaurants FROM anon, authenticated;
+GRANT UPDATE (
+  name,
+  slug,
+  logo_url,
+  whatsapp,
+  whatsapp_message,
+  theme_color,
+  theme_font,
+  cover_url,
+  tagline,
+  address,
+  opening_hours,
+  instagram,
+  show_sold_out
+) ON public.restaurants TO authenticated;
+
+REVOKE SELECT ON public.restaurants FROM anon;
+GRANT SELECT (
+  id,
+  name,
+  slug,
+  logo_url,
+  whatsapp,
+  whatsapp_message,
+  subscription_status,
+  subscription_expires_at,
+  created_at,
+  theme_color,
+  theme_font,
+  cover_url,
+  tagline,
+  address,
+  opening_hours,
+  instagram,
+  show_sold_out
+) ON public.restaurants TO anon;
+
