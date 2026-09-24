@@ -80,22 +80,26 @@ export default function ItemFormModal({
     setUploadingImage(true)
     try {
       const compressed = await compressImage(file, { maxWidth: 1000, maxHeight: 1000, quality: 0.85 })
-      const fileName = `${restaurantId}/items/${Date.now()}.webp`
 
-      const { error: uploadError } = await supabase.storage
-        .from('restaurant-assets')
-        .upload(fileName, compressed, { upsert: true, contentType: 'image/webp' })
+      const formData = new FormData()
+      formData.append('file', compressed)
+      formData.append('restaurantId', restaurantId)
+      formData.append('type', 'item')
 
-      if (uploadError) throw uploadError
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('restaurant-assets')
-        .getPublicUrl(fileName)
+      const data = await res.json()
+      if (!res.ok || !data.publicUrl) {
+        throw new Error(data.error || 'Erro ao fazer upload da imagem')
+      }
 
-      setImageUrl(publicUrl)
+      setImageUrl(data.publicUrl)
       toast.success('Imagem enviada com sucesso!')
-    } catch {
-      toast.error('Erro ao fazer upload da imagem')
+    } catch (err: any) {
+      toast.error(err?.message || 'Erro ao fazer upload da imagem')
     } finally {
       setUploadingImage(false)
     }

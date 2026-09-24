@@ -126,26 +126,30 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
     setUploadingLogo(true)
     try {
       const compressed = await compressImage(file, { maxWidth: 800, maxHeight: 800, quality: 0.85 })
-      const fileName = `${restaurant.id}/logo.webp`
 
-      const { error: uploadError } = await supabase.storage
-        .from('restaurant-assets')
-        .upload(fileName, compressed, { upsert: true, contentType: 'image/webp' })
+      const formData = new FormData()
+      formData.append('file', compressed)
+      formData.append('restaurantId', restaurant.id)
+      formData.append('type', 'logo')
 
-      if (uploadError) throw uploadError
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('restaurant-assets')
-        .getPublicUrl(fileName)
+      const data = await res.json()
+      if (!res.ok || !data.publicUrl) {
+        throw new Error(data.error || 'Erro ao fazer upload da logo')
+      }
 
-      const urlWithCache = `${publicUrl}?t=${Date.now()}`
+      const urlWithCache = `${data.publicUrl}?t=${Date.now()}`
       setLogoUrl(urlWithCache)
 
-      await supabase.from('restaurants').update({ logo_url: publicUrl }).eq('id', restaurant.id)
+      await supabase.from('restaurants').update({ logo_url: data.publicUrl }).eq('id', restaurant.id)
       await revalidateMenuAction({ slug: restaurant.slug, restaurantId: restaurant.id })
       toast.success('Logo atualizada com sucesso!')
-    } catch {
-      toast.error('Erro ao fazer upload da logo')
+    } catch (err: any) {
+      toast.error(err?.message || 'Erro ao fazer upload da logo')
     } finally {
       setUploadingLogo(false)
     }
@@ -158,26 +162,30 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
     setUploadingCover(true)
     try {
       const compressed = await compressImage(file, { maxWidth: 1200, maxHeight: 600, quality: 0.85 })
-      const fileName = `${restaurant.id}/cover.webp`
 
-      const { error: uploadError } = await supabase.storage
-        .from('restaurant-assets')
-        .upload(fileName, compressed, { upsert: true, contentType: 'image/webp' })
+      const formData = new FormData()
+      formData.append('file', compressed)
+      formData.append('restaurantId', restaurant.id)
+      formData.append('type', 'cover')
 
-      if (uploadError) throw uploadError
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('restaurant-assets')
-        .getPublicUrl(fileName)
+      const data = await res.json()
+      if (!res.ok || !data.publicUrl) {
+        throw new Error(data.error || 'Erro ao fazer upload da imagem de capa')
+      }
 
-      const urlWithCache = `${publicUrl}?t=${Date.now()}`
+      const urlWithCache = `${data.publicUrl}?t=${Date.now()}`
       setCoverUrl(urlWithCache)
 
-      await supabase.from('restaurants').update({ cover_url: publicUrl }).eq('id', restaurant.id)
+      await supabase.from('restaurants').update({ cover_url: data.publicUrl }).eq('id', restaurant.id)
       await revalidateMenuAction({ slug: restaurant.slug, restaurantId: restaurant.id })
       toast.success('Capa atualizada com sucesso!')
-    } catch {
-      toast.error('Erro ao fazer upload da imagem de capa')
+    } catch (err: any) {
+      toast.error(err?.message || 'Erro ao fazer upload da imagem de capa')
     } finally {
       setUploadingCover(false)
     }

@@ -81,7 +81,7 @@ export async function getCachedMenuData(slug: string): Promise<CachedMenuResult>
     },
     [`menu-cache-slug-${normalizedSlug}`],
     {
-      revalidate: 3600, // Revalida em segundo plano após 1h (fallback temporal)
+      revalidate: 10, // Revalida em segundo plano após 10s (fallback dinâmico rápido)
       tags: ['menus', `menu-${normalizedSlug}`],
     }
   )

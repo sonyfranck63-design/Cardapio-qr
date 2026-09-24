@@ -49,7 +49,7 @@ export default function ItemsManager({ restaurantId, restaurantSlug, categories,
       setItems(prev => prev.map(i => i.id === item.id ? { ...i, is_active: newStatus } : i))
       toast.success(newStatus ? 'Item ativado' : 'Item desativado')
       // Revalidação sob demanda imediata do cardápio público
-      revalidateMenuAction({ slug: restaurantSlug, restaurantId })
+      await revalidateMenuAction({ slug: restaurantSlug, restaurantId })
     }
     setTogglingId(null)
     router.refresh()
@@ -67,13 +67,13 @@ export default function ItemsManager({ restaurantId, restaurantSlug, categories,
       setItems(prev => prev.filter(i => i.id !== id))
       toast.success('Item excluído')
       // Revalidação sob demanda imediata do cardápio público
-      revalidateMenuAction({ slug: restaurantSlug, restaurantId })
+      await revalidateMenuAction({ slug: restaurantSlug, restaurantId })
     }
     setDeletingId(null)
     router.refresh()
   }
 
-  function handleSaved(saved: MenuItem) {
+  async function handleSaved(saved: MenuItem) {
     setItems(prev => {
       const exists = prev.find(i => i.id === saved.id)
       if (exists) return prev.map(i => i.id === saved.id ? saved : i)
@@ -82,7 +82,7 @@ export default function ItemsManager({ restaurantId, restaurantSlug, categories,
     setShowModal(false)
     setEditingItem(null)
     // Revalidação sob demanda imediata do cardápio público
-    revalidateMenuAction({ slug: restaurantSlug, restaurantId })
+    await revalidateMenuAction({ slug: restaurantSlug, restaurantId })
     router.refresh()
   }
 

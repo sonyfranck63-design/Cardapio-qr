@@ -159,4 +159,4 @@ export default async function MenuPage({ params }: MenuPageProps) {
 /**
  * Revalidação temporal de fallback para ISR (em segundos).
  */
-export const revalidate = 3600
+export const revalidate = 10

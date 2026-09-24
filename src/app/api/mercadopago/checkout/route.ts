@@ -79,11 +79,14 @@ export async function POST(req: Request) {
 
     const checkoutUrl = preference.init_point || preference.sandbox_init_point
 
-    return NextResponse.json({ url: checkoutUrl })
+    return NextResponse.json({
+      url: checkoutUrl,
+      init_point: checkoutUrl,
+    })
   } catch (error: any) {
     console.error('[Mercado Pago Checkout] Erro ao criar preferência de pagamento:', error)
     return NextResponse.json(
-      { error: 'Não foi possível gerar a cobrança no momento. Tente novamente mais tarde.' },
+      { error: error?.message || 'Não foi possível gerar a cobrança no momento. Tente novamente mais tarde.' },
       { status: 500 }
     )
   }

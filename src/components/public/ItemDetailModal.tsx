@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { MenuItem } from '@/types/database'
 import { formatCurrency, buildWhatsAppUrl } from '@/lib/utils'

@@ -59,7 +59,7 @@ export default function CategoriesManager({ restaurantId, restaurantSlug, initia
     reset()
     toast.success('Categoria criada!')
     // Revalidação sob demanda imediata do cardápio público
-    revalidateMenuAction({ slug: restaurantSlug, restaurantId })
+    await revalidateMenuAction({ slug: restaurantSlug, restaurantId })
     router.refresh()
   }
 
@@ -80,7 +80,7 @@ export default function CategoriesManager({ restaurantId, restaurantSlug, initia
     setEditingId(null)
     toast.success('Categoria atualizada!')
     // Revalidação sob demanda imediata do cardápio público
-    revalidateMenuAction({ slug: restaurantSlug, restaurantId })
+    await revalidateMenuAction({ slug: restaurantSlug, restaurantId })
     router.refresh()
   }
 
@@ -111,7 +111,7 @@ export default function CategoriesManager({ restaurantId, restaurantSlug, initia
     toast.success('Categoria excluída')
     setDeletingId(null)
     // Revalidação sob demanda imediata do cardápio público
-    revalidateMenuAction({ slug: restaurantSlug, restaurantId })
+    await revalidateMenuAction({ slug: restaurantSlug, restaurantId })
     router.refresh()
   }
 
@@ -133,7 +133,7 @@ export default function CategoriesManager({ restaurantId, restaurantSlug, initia
         supabase.from('categories').update({ order: targetIndex }).eq('id', current.id),
         supabase.from('categories').update({ order: index }).eq('id', target.id),
       ])
-      revalidateMenuAction({ slug: restaurantSlug, restaurantId })
+      await revalidateMenuAction({ slug: restaurantSlug, restaurantId })
     } catch {
       toast.error('Erro ao salvar nova ordem')
       setCategories(categories)
