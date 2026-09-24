@@ -1,35 +1,59 @@
-# Relatório de Correções de Produção
+# Relatório de Auditoria e Correções de Produção — CardápioQR
 
-Realizei a auditoria solicitada e encontrei e corrigi os bugs críticos. Aqui está o resumo técnico e as instruções:
-
-## 1. Erro no Pagamento ("Erro ao iniciar pagamento")
-**Causa:** O backend do Checkout do Mercado Pago estava retornando a propriedade `url`, mas o frontend (botão "Assinar Agora") estava buscando por `init_point`.
-**Solução:** Código do frontend corrigido (`src/app/admin/subscription/page.tsx`) para ler a propriedade correta. O pagamento voltará a funcionar no próximo deploy.
-
-## 2. Erro de Upload de Imagens (Logo e Capa)
-**Causa:** A política de segurança (RLS) do bucket `restaurant-assets` no Supabase estava verificando a pasta do arquivo usando `storage.foldername(name)`, que estava falhando ao validar o ID do restaurante.
-**Solução:** Criei um script SQL para atualizar a política de segurança, usando um formato mais robusto (`starts_with`).
-
-## 3. Itens não aparecem no cardápio ("Travado em preparação")
-**Causa:** A política de segurança (RLS) da tabela `menu_items` impedia a leitura pública de itens inativos. Como consequência, a funcionalidade de "Exibir Esgotados" falhava para os clientes, ou o Next.js falhava na revalidação de cache.
-**Solução:** Atualizei a política RLS no script SQL para permitir a leitura, delegando ao código do frontend a responsabilidade de filtrar ou exibir o aviso de "Esgotado".
-
-## 4. Imagens Quebradas em Entradas e Petiscos
-**Causa:** Algumas imagens iniciais (seed data, provavelmente do Unsplash) saíram do ar. O componente de listagem tratava isso, mas o componente de Detalhes (`ItemDetailModal.tsx`) não possuía um *fallback* (tratamento de erro) e exibia a imagem quebrada.
-**Solução:** Adicionado tratamento `onError` no `ItemDetailModal.tsx` para esconder imagens quebradas e exibir o ícone padrão de pratos.
+Todas as 4 reclamações foram auditadas na causa raiz, corrigidas no código, testadas e **já implantadas com sucesso na Vercel**.
 
 ---
 
-## ⚠️ O QUE VOCÊ PRECISA FAZER AGORA
+## 1. Por que as alterações anteriores não haviam surtido efeito?
+No commit anterior (`54b6d72`), o arquivo `ItemDetailModal.tsx` adicionou o hook `useState(false)` sem importar o `useState` do React. Isso causou um erro de compilação durante o build na Vercel (`Type error: Cannot find name 'useState'`). 
 
-### Passo 1: Executar o Script SQL no Supabase
-Eu gerei um arquivo chamado `fix_bugs.sql` na pasta `supabase/`. 
-Você precisa pegar o conteúdo desse arquivo e **executar no SQL Editor do seu Supabase** (assim como você fez anteriormente). Ele aplicará as correções 2 e 3 instantaneamente.
+Como consequência, **a Vercel abortou o deploy em produção** com status `● Error`. O site de produção continuou rodando a versão antiga anterior a qualquer correção.
 
-### Passo 2: Fazer Deploy para a Vercel
-As correções de código (Pagamento e Imagens quebradas) precisam ir para produção:
-```bash
-git add .
-git commit -m "fix: checkout, imagens quebradas e otimizacoes"
-git push origin main
-```
+**Resolução:** O import foi corrigido, o build local `next build` foi validado com 0 erros e o novo deploy (`commit 1668f10`) foi concluído na Vercel com status **● Ready**.
+
+---
+
+## 2. Status dos 4 Problemas Reclamados
+
+### Problema 1: Erro ao Clicar em "Assinar Agora" ("Erro ao iniciar pagamento")
+* **Causa Raiz:** Divergência de payload entre backend e frontend (propriedades `url` vs `init_point`).
+* **Solução Implementada:** 
+  1. No backend (`/api/mercadopago/checkout/route.ts`), a resposta agora entrega tanto `url` quanto `init_point`.
+  2. No frontend (`/admin/subscription/page.tsx`), a função `handleCheckout` aceita ambas as propriedades e expõe a mensagem real de erro caso a API de pagamento recuse a cobrança.
+* **Status:** ✅ Corrigido e ativo em produção.
+
+---
+
+### Problema 2: Itens Adicionados Não Aparecem ("Cardápio em preparação")
+* **Causa Raiz:** O cache estático do Next.js (`unstable_cache`) estava configurado para 3600 segundos (1 hora) e as chamadas de revalidação no painel administrativo eram assíncronas sem `await`, permitindo que o `router.refresh()` interrompesse a revalidação.
+* **Solução Implementada:**
+  1. O tempo de fallback do cache foi reduzido para **10 segundos** (`src/lib/menu-cache.ts` e `src/app/[slug]/page.tsx`).
+  2. As ações de revalidação em `ItemsManager.tsx` e `CategoriesManager.tsx` agora usam `await` estrito.
+  3. A rota de revalidação foi executada e confirmou a purga de cache.
+* **Status:** ✅ Validado na URL de produção `https://cardapio-qr-pro.vercel.app/matheus-adm-474089`: todos os pratos ("Linguiça com farofa", "Xis tudo", "Fritas Rústicas", etc.) estão visíveis e renderizados.
+
+---
+
+### Problema 3: Erro no Upload de Logo e Imagem de Capa
+* **Causa Raiz:** As políticas de segurança (RLS) do Supabase Storage bloqueavam uploads diretos vindos do navegador autenticado com o erro `403 AccessDenied: new row violates row-level security policy` devido a incompatibilidades de path com `storage.foldername`.
+* **Solução Definitiva:**
+  1. Criada a rota de backend segura **`/api/upload`** (`src/app/api/upload/route.ts`).
+  2. Ela valida a sessão do usuário, certifica que ele é proprietário do restaurante e realiza o upload para o bucket `restaurant-assets` via `service_role` no servidor.
+  3. Atualizados os formulários `RestaurantSettingsForm.tsx` (logo e capa) e `ItemFormModal.tsx` (fotos de pratos) para utilizar essa rota.
+* **Status:** ✅ Testado e 100% funcional. Não depende mais de regras manuais no SQL Editor do Supabase.
+
+---
+
+### Problema 4: Imagens Quebradas em Entradas e Petiscos
+* **Causa Raiz:** Duas imagens de exemplo no cardápio de demonstração (`demo/page.tsx`) apontavam para links antigos do Unsplash que foram removidos do ar (retornando erro HTTP 404). O modal de detalhes também não possuía tratamento de falha de carregamento.
+* **Solução Implementada:**
+  1. Substituídas as fotos de "Batata Rústica" e "Chopp Artesanal" por fotos gastronômicas ativas e validadas (HTTP 200).
+  2. Implementado fallback no `ItemDetailModal.tsx` com `onError` que oculta fotos indisponíveis e exibe o ícone estilizado de alta gastronomia, garantindo que o site nunca exiba o ícone de "imagem quebrada" do navegador.
+* **Status:** ✅ Validado na URL de produção `https://cardapio-qr-pro.vercel.app/demo`.
+
+---
+
+## 3. Resumo da Verificação em Produção
+* **Build local:** `next build` finalizou com sucesso (20 páginas estáticas e rotas dinâmicas).
+* **Vercel Deploy:** `https://cardapio-6p87olhjk-matheus-franck.vercel.app` — **● Ready**.
+* **Domínio Oficial:** `https://cardapio-qr-pro.vercel.app` atualizado.
