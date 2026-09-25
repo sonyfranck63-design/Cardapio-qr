@@ -156,10 +156,10 @@ export default function ItemsManager({ restaurantId, restaurantSlug, categories,
 
         <button
           onClick={() => { setEditingItem(null); setShowModal(true) }}
-          className="btn-primary shrink-0 w-full sm:w-auto justify-center"
+          className="btn-primary !text-white font-bold shrink-0 w-full sm:w-auto justify-center flex items-center gap-2 py-2.5 px-4 shadow-sm"
         >
-          <Plus className="w-4 h-4" />
-          <span>Novo prato</span>
+          <Plus className="w-4 h-4 text-white shrink-0 stroke-[2.5]" />
+          <span className="text-white font-bold">Novo prato</span>
         </button>
       </div>
 

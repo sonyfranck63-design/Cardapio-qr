@@ -69,7 +69,7 @@ export default async function AdminLayout({
   return (
     <div className="min-h-screen bg-[#faf8f5] text-stone-900 flex font-sans selection:bg-orange-100 selection:text-orange-950">
       <AdminSidebar restaurant={restaurant} />
-      <main className="flex-1 lg:ml-64 min-h-screen flex flex-col pb-20 lg:pb-0">
+      <main className="flex-1 lg:ml-64 min-h-screen flex flex-col pt-16 lg:pt-0 pb-20 lg:pb-0">
         {isEmailPending && (
           <div className="bg-amber-50 border-b border-amber-200 px-4 sm:px-8 py-3 text-amber-950 text-xs sm:text-sm flex items-center gap-2.5">
             <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse shrink-0" />

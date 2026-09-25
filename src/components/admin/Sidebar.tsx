@@ -202,9 +202,6 @@ export default function AdminSidebar({ restaurant }: AdminSidebarProps) {
         </div>
       </header>
 
-      {/* Espaçador superior para compensar o header fixo no mobile */}
-      <div className="lg:hidden h-14" />
-
       {/* ========================================================
           3. MOBILE DRAWER (Gaveta Lateral Fluida & Centralizada)
          ======================================================== */}

@@ -45,20 +45,22 @@ export default function CategoryNav({ categories, themeColor }: CategoryNavProps
     return () => observer.disconnect()
   }, [categories])
 
-  // Rola horizontalmente a barra de navegação para manter o botão ativo visível
+  // Rola horizontalmente a barra de navegação para manter o botão ativo visível (sem afetar a rolagem vertical da página)
   useEffect(() => {
     if (!activeId) return
     const button = buttonsRef.current.get(activeId)
-    if (button && navRef.current) {
-      const navContainer = navRef.current
-      const navRect = navContainer.getBoundingClientRect()
+    const navContainer = navRef.current
+    if (button && navContainer) {
+      const containerRect = navContainer.getBoundingClientRect()
       const buttonRect = button.getBoundingClientRect()
 
-      if (buttonRect.left < navRect.left || buttonRect.right > navRect.right) {
-        button.scrollIntoView({
+      if (buttonRect.left < containerRect.left || buttonRect.right > containerRect.right) {
+        const offsetLeft = button.offsetLeft
+        const targetScrollLeft = offsetLeft - navContainer.clientWidth / 2 + button.clientWidth / 2
+
+        navContainer.scrollTo({
+          left: Math.max(0, targetScrollLeft),
           behavior: 'smooth',
-          block: 'nearest',
-          inline: 'center',
         })
       }
     }

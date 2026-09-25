@@ -157,7 +157,7 @@ export default function CategoriesManager({ restaurantId, restaurantSlug, initia
               <p className="mt-1.5 text-xs text-red-600 font-medium">{errors.name.message}</p>
             )}
           </div>
-          <button type="submit" disabled={isSubmitting} className="btn-primary w-full sm:w-auto justify-center shrink-0 py-2.5">
+          <button type="submit" disabled={isSubmitting} className="btn-primary !text-white font-bold flex items-center gap-2 w-full sm:w-auto justify-center shrink-0 py-2.5">
             {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
             <span>Adicionar categoria</span>
           </button>
