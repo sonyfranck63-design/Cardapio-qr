@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Toaster } from 'react-hot-toast'
+import { fontClassico, fontModerno, fontBoteco } from '@/lib/theme'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -23,7 +24,11 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
+    <html
+      lang="pt-BR"
+      className={`${fontClassico.variable} ${fontModerno.variable} ${fontBoteco.variable}`}
+      suppressHydrationWarning
+    >
       <body>
         {children}
         <Toaster

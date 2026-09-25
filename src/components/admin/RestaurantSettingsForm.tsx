@@ -401,6 +401,10 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
           </p>
         </div>
 
+        {/* Inputs ocultos para registro garantido no React Hook Form */}
+        <input type="hidden" {...register('theme_font')} />
+        <input type="hidden" {...register('theme_color')} />
+
         {/* Seleção de Tipografia */}
         <div className="space-y-3">
           <label className="input-label flex items-center gap-1.5">
@@ -415,16 +419,16 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
                 <button
                   key={fontKey}
                   type="button"
-                  onClick={() => setValue('theme_font', fontKey)}
+                  onClick={() => setValue('theme_font', fontKey, { shouldDirty: true, shouldValidate: true })}
                   className={`p-3.5 rounded-xl border text-left transition-all ${
                     isSelected
-                      ? 'border-orange-600 bg-orange-50/80 ring-1 ring-orange-600'
+                      ? 'border-orange-600 bg-orange-50/80 ring-1 ring-orange-600 shadow-2xs'
                       : 'border-stone-200 bg-stone-50 hover:bg-stone-100'
                   }`}
                 >
                   <div className="text-sm font-bold text-stone-900 mb-0.5">{option.name}</div>
                   <div className="text-xs text-stone-500 mb-2">{option.description}</div>
-                  <div className={`text-xs text-orange-800 font-medium ${option.fontClass}`}>
+                  <div className={`text-xs text-orange-900 font-medium ${option.fontClass}`}>
                     &ldquo;{option.sampleText}&rdquo;
                   </div>
                 </button>
@@ -435,13 +439,13 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
 
         {/* Seleção de Cor Tema */}
         <div className="space-y-3">
-          <label className="input-label">Cor de Fundo do Cabeçalho</label>
+          <label className="input-label">Cor Principal do Tema (Cabeçalho & Destaques)</label>
           <div className="flex flex-wrap items-center gap-2.5">
             {PRESET_THEME_COLORS.map(preset => (
               <button
                 key={preset.hex}
                 type="button"
-                onClick={() => setValue('theme_color', preset.hex)}
+                onClick={() => setValue('theme_color', preset.hex, { shouldDirty: true, shouldValidate: true })}
                 className={`w-9 h-9 rounded-xl border-2 transition-transform ${preset.bgClass} ${
                   themeColorValue.toLowerCase() === preset.hex.toLowerCase()
                     ? 'border-stone-900 scale-110 shadow-sm'
@@ -456,7 +460,7 @@ export default function RestaurantSettingsForm({ restaurant }: RestaurantSetting
                 type="color"
                 id="theme_color_picker"
                 value={themeColorValue}
-                onChange={e => setValue('theme_color', e.target.value)}
+                onChange={e => setValue('theme_color', e.target.value, { shouldDirty: true, shouldValidate: true })}
                 className="w-9 h-9 rounded-xl cursor-pointer bg-transparent border-0"
               />
               <span className="text-xs font-mono font-medium text-stone-600">{themeColorValue}</span>

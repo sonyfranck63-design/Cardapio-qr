@@ -2,18 +2,21 @@ import { Lora, Plus_Jakarta_Sans, Oswald } from 'next/font/google'
 
 export const fontClassico = Lora({
   subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
   display: 'swap',
   variable: '--font-theme-classico',
 })
 
 export const fontModerno = Plus_Jakarta_Sans({
   subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800'],
   display: 'swap',
   variable: '--font-theme-moderno',
 })
 
 export const fontBoteco = Oswald({
   subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
   display: 'swap',
   variable: '--font-theme-boteco',
 })
@@ -33,21 +36,21 @@ export const THEME_FONTS: Record<ThemeFontType, ThemeFontOption> = {
     id: 'classico',
     name: 'Clássico (Serif)',
     description: 'Bistrôs, cantinas e alta gastronomia',
-    fontClass: fontClassico.className,
+    fontClass: `${fontClassico.variable} ${fontClassico.className}`,
     sampleText: 'Gastronomia & Tradição',
   },
   moderno: {
     id: 'moderno',
     name: 'Moderno (Sans)',
     description: 'Cafés, docerias e restaurantes contemporâneos',
-    fontClass: fontModerno.className,
+    fontClass: `${fontModerno.variable} ${fontModerno.className}`,
     sampleText: 'Sabor & Experiência',
   },
   boteco: {
     id: 'boteco',
     name: 'Boteco (Condensada)',
     description: 'Hamburguerias, bares, pubs e espetarias',
-    fontClass: fontBoteco.className,
+    fontClass: `${fontBoteco.variable} ${fontBoteco.className}`,
     sampleText: 'Cerveja Gelada & Petiscos',
   },
 }
@@ -92,10 +95,11 @@ export function getContrastColor(hexColor?: string | null): '#ffffff' | '#0f172a
 }
 
 /**
- * Retorna a classe de fonte adequada para o tema
+ * Retorna a classe de fonte adequada para o tema, injetando as variáveis CSS
+ * e a respectiva classe Tailwind (font-serif, font-display, font-sans).
  */
 export function getThemeFontClass(themeFont?: string | null): string {
-  if (themeFont === 'classico') return fontClassico.className
-  if (themeFont === 'boteco') return fontBoteco.className
-  return fontModerno.className
+  if (themeFont === 'classico') return `${fontClassico.variable} ${fontClassico.className} font-serif`
+  if (themeFont === 'boteco') return `${fontBoteco.variable} ${fontBoteco.className} font-display`
+  return `${fontModerno.variable} ${fontModerno.className} font-sans`
 }

@@ -2,15 +2,20 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { CategoryWithItems } from '@/types/database'
+import { getContrastColor } from '@/lib/theme'
 
 interface CategoryNavProps {
   categories: CategoryWithItems[]
+  themeColor?: string | null
 }
 
-export default function CategoryNav({ categories }: CategoryNavProps) {
+export default function CategoryNav({ categories, themeColor }: CategoryNavProps) {
   const [activeId, setActiveId] = useState<string>(categories[0]?.id || '')
   const navRef = useRef<HTMLDivElement>(null)
   const buttonsRef = useRef<Map<string, HTMLButtonElement>>(new Map())
+
+  const activeBg = themeColor || '#ea580c'
+  const activeTextColor = getContrastColor(activeBg)
 
   useEffect(() => {
     if (categories.length <= 1) return
@@ -70,7 +75,7 @@ export default function CategoryNav({ categories }: CategoryNavProps) {
   }
 
   return (
-    <nav className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm">
+    <nav className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-stone-200 shadow-xs">
       <div className="max-w-lg mx-auto px-4">
         <div
           ref={navRef}
@@ -87,11 +92,12 @@ export default function CategoryNav({ categories }: CategoryNavProps) {
                 }}
                 onClick={() => scrollToCategory(cat.id)}
                 aria-current={isActive ? 'true' : undefined}
-                className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-200 whitespace-nowrap focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:outline-none ${
+                className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-200 whitespace-nowrap focus-visible:ring-2 focus-visible:outline-none ${
                   isActive
-                    ? 'bg-orange-500 text-white shadow-sm shadow-orange-500/20'
-                    : 'bg-gray-100 text-gray-700 [@media(hover:hover)]:hover:bg-gray-200 [@media(hover:hover)]:hover:text-gray-900 active:bg-gray-200'
+                    ? 'shadow-xs'
+                    : 'bg-stone-100 text-stone-700 [@media(hover:hover)]:hover:bg-stone-200 [@media(hover:hover)]:hover:text-stone-950 active:bg-stone-200'
                 }`}
+                style={isActive ? { backgroundColor: activeBg, color: activeTextColor } : undefined}
               >
                 {cat.name}
               </button>
@@ -102,3 +108,4 @@ export default function CategoryNav({ categories }: CategoryNavProps) {
     </nav>
   )
 }
+

@@ -114,7 +114,7 @@ export default async function MenuPage({ params }: MenuPageProps) {
       <MenuHeader restaurant={restaurant} />
 
       {/* Navegação horizontal de categorias */}
-      <CategoryNav categories={visibleCategories} />
+      <CategoryNav categories={visibleCategories} themeColor={restaurant.theme_color} />
 
       {/* Conteúdo do Cardápio */}
       <main className="max-w-xl mx-auto pt-6 pb-28">
