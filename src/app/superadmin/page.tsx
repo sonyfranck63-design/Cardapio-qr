@@ -5,21 +5,16 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Restaurant } from '@/types/database'
 import {
-  Users,
   CheckCircle2,
   AlertCircle,
-  Clock,
   Sparkles,
   Search,
   ExternalLink,
   PlusCircle,
   RefreshCw,
   DollarSign,
-  TrendingUp,
   Store,
-  ShieldAlert,
   Calendar,
-  Layers
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { PLAN_PRICE } from '@/lib/plans'
@@ -46,7 +41,7 @@ export default function SuperAdminPage() {
       } else {
         setRestaurants(data || [])
       }
-    } catch (err: any) {
+    } catch {
       toast.error('Erro de conexão ao buscar estabelecimentos.')
     } finally {
       setLoading(false)
@@ -90,7 +85,7 @@ export default function SuperAdminPage() {
       } else {
         await loadRestaurants()
       }
-    } catch (err: any) {
+    } catch {
       toast.error('Erro ao processar ação.')
     } finally {
       setActionLoadingId(null)
@@ -139,14 +134,14 @@ export default function SuperAdminPage() {
   })
 
   return (
-    <div className="space-y-8 animate-fade-in pb-16">
+    <div className="space-y-6 sm:space-y-8 animate-fade-in pb-16">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-stone-950 tracking-tight">
             Painel Geral do SaaS
           </h1>
-          <p className="text-sm text-gray-400 mt-1">
+          <p className="text-sm text-stone-500 mt-1">
             Visão centralizada de todos os restaurantes parceiros e controle de mensalidades.
           </p>
         </div>
@@ -154,9 +149,9 @@ export default function SuperAdminPage() {
         <button
           onClick={loadRestaurants}
           disabled={loading}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-sm font-semibold text-gray-200 border border-white/10 transition-colors self-start sm:self-auto"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white hover:bg-stone-100 text-xs sm:text-sm font-semibold text-stone-800 border border-stone-300 shadow-2xs transition-colors self-start sm:self-auto active:scale-95"
         >
-          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-brand-400' : ''}`} />
+          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-orange-600' : 'text-stone-500'}`} />
           <span>Atualizar Dados</span>
         </button>
       </div>
@@ -164,113 +159,133 @@ export default function SuperAdminPage() {
       {/* Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* MRR */}
-        <div className="glass-card p-5 border-l-4 border-l-brand-500 relative overflow-hidden">
-          <div className="flex items-center justify-between text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">
-            <span>Faturamento Estimado</span>
-            <DollarSign className="w-4 h-4 text-brand-400" />
+        <div className="bg-white p-5 rounded-2xl border border-stone-200/90 shadow-2xs flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs uppercase tracking-wider font-bold text-stone-500">Faturamento Estimado</span>
+            <div className="w-8 h-8 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center font-bold">
+              <DollarSign className="w-4 h-4" />
+            </div>
           </div>
-          <div className="text-2xl font-black text-white">
-            {monthlyRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-            <span className="text-xs font-normal text-gray-400">/mês</span>
+          <div>
+            <div className="text-2xl sm:text-3xl font-black text-stone-950 tabular-nums">
+              {monthlyRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              <span className="text-xs font-semibold text-stone-400 ml-1">/mês</span>
+            </div>
+            <p className="text-[11px] text-stone-500 mt-1.5">
+              Baseado em {activeCount} {activeCount === 1 ? 'assinante ativo' : 'assinantes ativos'}
+            </p>
           </div>
-          <p className="text-[11px] text-gray-400 mt-1">
-            Baseado em {activeCount} {activeCount === 1 ? 'assinante ativo' : 'assinantes ativos'}
-          </p>
         </div>
 
         {/* Total Estabelecimentos */}
-        <div className="glass-card p-5 border-l-4 border-l-blue-500">
-          <div className="flex items-center justify-between text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">
-            <span>Total Cadastrados</span>
-            <Store className="w-4 h-4 text-blue-400" />
+        <div className="bg-white p-5 rounded-2xl border border-stone-200/90 shadow-2xs flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs uppercase tracking-wider font-bold text-stone-500">Total Cadastrados</span>
+            <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
+              <Store className="w-4 h-4" />
+            </div>
           </div>
-          <div className="text-2xl font-black text-white">{totalCount}</div>
-          <p className="text-[11px] text-gray-400 mt-1">Bares e restaurantes criados</p>
+          <div>
+            <div className="text-2xl sm:text-3xl font-black text-stone-950 tabular-nums">{totalCount}</div>
+            <p className="text-[11px] text-stone-500 mt-1.5">Bares e restaurantes criados</p>
+          </div>
         </div>
 
         {/* Ativos */}
-        <div className="glass-card p-5 border-l-4 border-l-emerald-500">
-          <div className="flex items-center justify-between text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">
-            <span>Assinaturas Ativas</span>
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+        <div className="bg-white p-5 rounded-2xl border border-stone-200/90 shadow-2xs flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs uppercase tracking-wider font-bold text-stone-500">Assinaturas Ativas</span>
+            <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
           </div>
-          <div className="text-2xl font-black text-emerald-400">{activeCount}</div>
-          <p className="text-[11px] text-gray-400 mt-1">Planos pagos e vigentes</p>
+          <div>
+            <div className="text-2xl sm:text-3xl font-black text-emerald-700 tabular-nums">{activeCount}</div>
+            <p className="text-[11px] text-emerald-800 font-medium mt-1.5">Planos pagos e vigentes</p>
+          </div>
         </div>
 
         {/* Trial */}
-        <div className="glass-card p-5 border-l-4 border-l-amber-500">
-          <div className="flex items-center justify-between text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">
-            <span>Em Degustação (Trial)</span>
-            <Sparkles className="w-4 h-4 text-amber-400" />
+        <div className="bg-white p-5 rounded-2xl border border-stone-200/90 shadow-2xs flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs uppercase tracking-wider font-bold text-stone-500">Em Degustação (Trial)</span>
+            <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold">
+              <Sparkles className="w-4 h-4" />
+            </div>
           </div>
-          <div className="text-2xl font-black text-amber-400">{trialCount}</div>
-          <p className="text-[11px] text-gray-400 mt-1">Período de teste de 7 dias</p>
+          <div>
+            <div className="text-2xl sm:text-3xl font-black text-amber-700 tabular-nums">{trialCount}</div>
+            <p className="text-[11px] text-amber-800 font-medium mt-1.5">Período de teste de 7 dias</p>
+          </div>
         </div>
 
         {/* Vencidos */}
-        <div className="glass-card p-5 border-l-4 border-l-red-500">
-          <div className="flex items-center justify-between text-gray-400 text-xs font-semibold uppercase tracking-wider mb-2">
-            <span>Suspensos / Vencidos</span>
-            <AlertCircle className="w-4 h-4 text-red-400" />
+        <div className="bg-white p-5 rounded-2xl border border-stone-200/90 shadow-2xs flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs uppercase tracking-wider font-bold text-stone-500">Suspensos / Vencidos</span>
+            <div className="w-8 h-8 rounded-xl bg-red-100 text-red-700 flex items-center justify-center font-bold">
+              <AlertCircle className="w-4 h-4" />
+            </div>
           </div>
-          <div className="text-2xl font-black text-red-400">{expiredCount}</div>
-          <p className="text-[11px] text-gray-400 mt-1">Necessitam regularização</p>
+          <div>
+            <div className="text-2xl sm:text-3xl font-black text-red-700 tabular-nums">{expiredCount}</div>
+            <p className="text-[11px] text-red-800 font-medium mt-1.5">Necessitam regularização</p>
+          </div>
         </div>
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="glass-card p-4 flex flex-col md:flex-row gap-4 justify-between items-center">
+      <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-stone-200 shadow-2xs flex flex-col md:flex-row gap-3 justify-between items-center">
         {/* Search */}
         <div className="relative w-full md:w-80">
-          <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Buscar por nome ou slug..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            className="input-field pl-10 text-sm py-2"
+            className="w-full pl-10 pr-4 py-2 bg-stone-50 border border-stone-300 rounded-xl text-stone-900 placeholder-stone-400 text-xs sm:text-sm focus:outline-none focus:border-orange-600 focus:bg-white transition-colors"
           />
         </div>
 
         {/* Status Filters */}
-        <div className="flex items-center gap-1 bg-white/5 p-1 rounded-xl w-full md:w-auto overflow-x-auto">
+        <div className="flex items-center gap-1.5 bg-stone-100/90 p-1 rounded-xl w-full md:w-auto overflow-x-auto border border-stone-200/60">
           <button
             onClick={() => setStatusFilter('all')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
               statusFilter === 'all'
-                ? 'bg-brand-500 text-white shadow-sm'
-                : 'text-gray-400 hover:text-white'
+                ? 'bg-orange-700 text-white shadow-xs'
+                : 'text-stone-600 hover:text-stone-950 font-medium'
             }`}
           >
             Todos ({totalCount})
           </button>
           <button
             onClick={() => setStatusFilter('active')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
               statusFilter === 'active'
-                ? 'bg-emerald-500 text-white shadow-sm'
-                : 'text-gray-400 hover:text-white'
+                ? 'bg-emerald-700 text-white shadow-xs'
+                : 'text-stone-600 hover:text-stone-950 font-medium'
             }`}
           >
             Ativos ({activeCount})
           </button>
           <button
             onClick={() => setStatusFilter('trial')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
               statusFilter === 'trial'
-                ? 'bg-amber-500 text-white shadow-sm'
-                : 'text-gray-400 hover:text-white'
+                ? 'bg-amber-600 text-white shadow-xs'
+                : 'text-stone-600 hover:text-stone-950 font-medium'
             }`}
           >
             Trial ({trialCount})
           </button>
           <button
             onClick={() => setStatusFilter('expired')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
               statusFilter === 'expired'
-                ? 'bg-red-500 text-white shadow-sm'
-                : 'text-gray-400 hover:text-white'
+                ? 'bg-red-700 text-white shadow-xs'
+                : 'text-stone-600 hover:text-stone-950 font-medium'
             }`}
           >
             Suspensos ({expiredCount})
@@ -280,22 +295,22 @@ export default function SuperAdminPage() {
 
       {/* Restaurants Table */}
       {loading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="w-8 h-8 border-4 border-brand-500 border-t-transparent rounded-full animate-spin" />
+        <div className="flex items-center justify-center py-20 bg-white rounded-2xl border border-stone-200">
+          <div className="w-8 h-8 border-4 border-orange-600 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : filteredRestaurants.length === 0 ? (
-        <div className="glass-card p-12 text-center text-gray-400">
-          <Store className="w-12 h-12 mx-auto mb-3 text-gray-600" />
-          <p className="text-base font-semibold text-white">Nenhum restaurante encontrado</p>
-          <p className="text-xs text-gray-500 mt-1">
+        <div className="bg-white p-12 text-center text-stone-500 rounded-2xl border border-stone-200 shadow-2xs">
+          <Store className="w-12 h-12 mx-auto mb-3 text-stone-400" />
+          <p className="text-base font-bold text-stone-900">Nenhum restaurante encontrado</p>
+          <p className="text-xs text-stone-500 mt-1">
             {searchTerm ? 'Tente buscar com outro termo.' : 'Ainda não há restaurantes cadastrados com esse filtro.'}
           </p>
         </div>
       ) : (
-        <div className="glass-card overflow-hidden">
+        <div className="bg-white rounded-2xl border border-stone-200/90 shadow-2xs overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="border-b border-white/10 bg-white/[0.02] text-xs font-semibold text-gray-400 uppercase tracking-wider">
+              <thead className="border-b border-stone-200 bg-stone-50 text-xs font-bold text-stone-600 uppercase tracking-wider">
                 <tr>
                   <th className="py-3.5 px-4 sm:px-6">Estabelecimento</th>
                   <th className="py-3.5 px-4">Status</th>
@@ -304,32 +319,32 @@ export default function SuperAdminPage() {
                   <th className="py-3.5 px-4 sm:px-6 text-right">Ações Manuais (Master)</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-stone-100">
                 {filteredRestaurants.map(r => {
                   const isActionLoading = actionLoadingId === r.id
 
                   return (
-                    <tr key={r.id} className="hover:bg-white/[0.02] transition-colors">
+                    <tr key={r.id} className="hover:bg-orange-50/20 transition-colors">
                       {/* Name & Slug */}
                       <td className="py-4 px-4 sm:px-6">
                         <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-400 font-bold shrink-0">
+                          <div className="w-9 h-9 rounded-xl bg-orange-100 border border-orange-200 flex items-center justify-center text-orange-900 font-extrabold shrink-0 shadow-2xs">
                             {r.name.charAt(0).toUpperCase()}
                           </div>
                           <div className="min-w-0">
-                            <div className="font-bold text-white text-base truncate flex items-center gap-2">
-                              {r.name}
+                            <div className="font-bold text-stone-950 text-sm sm:text-base truncate flex items-center gap-2">
+                              <span>{r.name}</span>
                               <Link
                                 href={`/${r.slug}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-gray-400 hover:text-brand-400 transition-colors"
+                                className="text-stone-400 hover:text-orange-700 transition-colors"
                                 title="Ver Cardápio Público do Cliente"
                               >
                                 <ExternalLink className="w-3.5 h-3.5" />
                               </Link>
                             </div>
-                            <div className="text-xs text-gray-500 font-mono truncate mt-0.5">
+                            <div className="text-xs text-stone-400 font-mono truncate mt-0.5">
                               /{r.slug}
                             </div>
                           </div>
@@ -339,20 +354,20 @@ export default function SuperAdminPage() {
                       {/* Status */}
                       <td className="py-4 px-4 whitespace-nowrap">
                         {r.isActive && (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                            <CheckCircle2 className="w-3 h-3" />
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
                             Ativo (Pago)
                           </span>
                         )}
                         {r.isTrial && (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                            <Sparkles className="w-3 h-3" />
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-900 border border-amber-200">
+                            <Sparkles className="w-3.5 h-3.5 text-amber-600" />
                             Trial ({r.daysRemaining} {r.daysRemaining === 1 ? 'dia' : 'dias'})
                           </span>
                         )}
                         {r.isExpired && (
-                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/20">
-                            <AlertCircle className="w-3 h-3" />
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-red-800 border border-red-200">
+                            <AlertCircle className="w-3.5 h-3.5 text-red-600" />
                             Suspenso (Vencido)
                           </span>
                         )}
@@ -360,13 +375,13 @@ export default function SuperAdminPage() {
 
                       {/* Expiration */}
                       <td className="py-4 px-4 whitespace-nowrap">
-                        <div className="flex items-center gap-1.5 text-xs text-gray-300">
-                          <Calendar className="w-3.5 h-3.5 text-gray-500" />
+                        <div className="flex items-center gap-1.5 text-xs text-stone-800 font-semibold">
+                          <Calendar className="w-3.5 h-3.5 text-stone-400" />
                           <span>{r.expiresDate.toLocaleDateString('pt-BR')}</span>
                         </div>
-                        <div className="text-[11px] text-gray-500 mt-0.5">
+                        <div className="text-[11px] text-stone-500 mt-0.5">
                           {r.isExpired ? (
-                            <span className="text-red-400">Venceu há {Math.abs(r.daysRemaining)} dias</span>
+                            <span className="text-red-600 font-medium">Venceu há {Math.abs(r.daysRemaining)} dias</span>
                           ) : (
                             <span>Resta {r.daysRemaining} {r.daysRemaining === 1 ? 'dia' : 'dias'}</span>
                           )}
@@ -374,7 +389,7 @@ export default function SuperAdminPage() {
                       </td>
 
                       {/* Created At */}
-                      <td className="py-4 px-4 whitespace-nowrap text-xs text-gray-400">
+                      <td className="py-4 px-4 whitespace-nowrap text-xs text-stone-600 font-medium">
                         {r.created_at ? new Date(r.created_at).toLocaleDateString('pt-BR') : '-'}
                       </td>
 
@@ -385,13 +400,13 @@ export default function SuperAdminPage() {
                           <button
                             onClick={() => handleSubscriptionAction(r.id, 'extend_30')}
                             disabled={isActionLoading}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold transition-colors disabled:opacity-50"
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-bold transition-all disabled:opacity-50 active:scale-95 shadow-2xs"
                             title="Ativar ou estender por +30 dias (usado para pagamentos no Pix direto ou Dinheiro)"
                           >
                             {isActionLoading ? (
-                              <RefreshCw className="w-3 h-3 animate-spin" />
+                              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                             ) : (
-                              <PlusCircle className="w-3 h-3" />
+                              <PlusCircle className="w-3.5 h-3.5 text-emerald-600" />
                             )}
                             <span>+30 Dias</span>
                           </button>
@@ -400,7 +415,7 @@ export default function SuperAdminPage() {
                           <button
                             onClick={() => handleSubscriptionAction(r.id, 'extend_7')}
                             disabled={isActionLoading}
-                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-semibold transition-colors disabled:opacity-50"
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-xs font-bold transition-all disabled:opacity-50 active:scale-95 shadow-2xs"
                             title="Estender teste grátis por +7 dias"
                           >
                             <span>+7 Dias</span>
@@ -411,7 +426,7 @@ export default function SuperAdminPage() {
                             <button
                               onClick={() => handleSubscriptionAction(r.id, 'suspend')}
                               disabled={isActionLoading}
-                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-semibold transition-colors disabled:opacity-50"
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-xs font-semibold transition-all disabled:opacity-50 active:scale-95"
                               title="Suspender cardápio imediatamente"
                             >
                               <span>Suspender</span>
