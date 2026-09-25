@@ -137,11 +137,70 @@
 }
 
 @media print {
+  @page {
+    size: auto;
+    margin: 8mm;
+  }
+
   body {
     background: #ffffff !important;
     color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
-  aside, nav, header, footer, button:not(#printable-table-tent button) {
+
+  /* Isolamento total da Placa de Mesa quando o modal estiver aberto */
+  body.table-tent-modal-open {
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Oculta tudo que for filho direto do body, EXCETO o portal da placa */
+  body.table-tent-modal-open > *:not(#table-tent-portal) {
+    display: none !important;
+  }
+
+  /* O portal ocupa a página de impressão centralizando o cartão */
+  #table-tent-portal {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: static !important;
+    width: 100% !important;
+    min-height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    overflow: visible !important;
+  }
+
+  /* Oculta botões e cabeçalhos de ação do modal */
+  #table-tent-portal .print\\:hidden,
+  .print\\:hidden {
+    display: none !important;
+  }
+
+  /* Força renderização exata das cores, fundos e bordas da plaquinha */
+  #printable-table-tent,
+  #printable-table-tent * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  #printable-table-tent {
+    box-shadow: none !important;
+    margin: auto !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Fallback padrão para impressão fora do modal da placa */
+  aside, nav, header, footer {
     display: none !important;
   }
 }
+
