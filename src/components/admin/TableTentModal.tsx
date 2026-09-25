@@ -97,6 +97,15 @@ export default function TableTentModal({
     const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' })
     const svgUrl = URL.createObjectURL(svgBlob)
 
+    // Helper para bordas arredondadas com suporte universal
+    const drawRoundRect = (x: number, y: number, w: number, h: number, r: number) => {
+      if (typeof ctx.roundRect === 'function') {
+        ctx.roundRect(x, y, w, h, r)
+      } else {
+        ctx.rect(x, y, w, h)
+      }
+    }
+
     img.onload = () => {
       // Fundo branco
       ctx.fillStyle = '#ffffff'
@@ -110,7 +119,7 @@ export default function TableTentModal({
 
       ctx.save()
       ctx.beginPath()
-      ctx.roundRect(margin, margin, cardW, cardH, radius)
+      drawRoundRect(margin, margin, cardW, cardH, radius)
       ctx.lineWidth = 14
       ctx.strokeStyle = '#111827'
       ctx.stroke()
@@ -137,7 +146,7 @@ export default function TableTentModal({
       const qrBoxX = (width - qrBoxSize) / 2
       const qrBoxY = 370
       ctx.beginPath()
-      ctx.roundRect(qrBoxX, qrBoxY, qrBoxSize, qrBoxSize, 40)
+      drawRoundRect(qrBoxX, qrBoxY, qrBoxSize, qrBoxSize, 40)
       ctx.fillStyle = '#ffffff'
       ctx.fill()
       ctx.lineWidth = 6
@@ -155,7 +164,7 @@ export default function TableTentModal({
       const badgeX = (width - badgeW) / 2
       const badgeY = 1170
       ctx.beginPath()
-      ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 32)
+      drawRoundRect(badgeX, badgeY, badgeW, badgeH, 32)
       ctx.fillStyle = '#fff7ed'
       ctx.fill()
       ctx.lineWidth = 3
@@ -209,27 +218,27 @@ export default function TableTentModal({
   const modalContent = (
     <div
       id="table-tent-portal"
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 pt-16 sm:pt-4 bg-black/80 backdrop-blur-sm overflow-y-auto print:fixed print:inset-0 print:z-[99999] print:bg-white print:p-0 print:m-0 print:overflow-visible print:flex print:items-center print:justify-center"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 pt-16 sm:pt-4 bg-black/80 backdrop-blur-sm overflow-y-auto print:fixed print:inset-0 print:z-[99999] print:bg-white print:p-0 print:m-0 print:overflow-visible print:flex print:items-center print:justify-center"
       role="dialog"
       aria-modal="true"
     >
-      {/* Botões de ação no topo (ocultos na impressão) */}
-      <div className="fixed top-0 inset-x-0 p-3 sm:p-4 flex items-center justify-between sm:justify-end gap-2.5 sm:gap-3 print:hidden z-20 bg-stone-950/80 sm:bg-transparent backdrop-blur-sm sm:backdrop-blur-none border-b border-white/10 sm:border-none">
+      {/* Botões de ação no topo (ocultos na impressão e responsivos em telas pequenas) */}
+      <div className="fixed top-0 inset-x-0 p-2.5 sm:p-4 flex items-center justify-end gap-2 sm:gap-3 print:hidden z-20 bg-stone-950/85 sm:bg-transparent backdrop-blur-md sm:backdrop-blur-none border-b border-white/10 sm:border-none">
         <button
           onClick={handlePrint}
-          className="btn-primary py-2 px-3 sm:px-4 shadow-lg flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-semibold"
+          className="btn-primary py-2 px-3 sm:px-4 shadow-lg flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm font-semibold shrink-0"
         >
           <Printer className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
-          <span>Imprimir / Salvar PDF</span>
+          <span>Imprimir<span className="hidden sm:inline"> / Salvar PDF</span></span>
         </button>
 
         <button
           onClick={handleDownloadCardPNG}
-          className="px-3 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white flex items-center gap-1.5 text-xs sm:text-sm font-semibold transition-colors shadow-lg"
+          className="px-2.5 sm:px-3 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-white flex items-center gap-1.5 text-xs sm:text-sm font-semibold transition-colors shadow-lg shrink-0"
           title="Baixar placa completa em imagem PNG"
         >
           <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
-          <span className="hidden xs:inline sm:inline">Baixar Imagem</span>
+          <span>Baixar<span className="hidden sm:inline"> Imagem</span></span>
         </button>
 
         <button
@@ -245,7 +254,7 @@ export default function TableTentModal({
       <div
         ref={modalRef}
         id="printable-table-tent"
-        className="w-full max-w-sm bg-white text-gray-900 rounded-3xl p-7 sm:p-8 shadow-2xl flex flex-col items-center text-center border-4 border-gray-900 my-auto print:shadow-none print:border-4 print:border-gray-900 print:w-[126mm] print:max-w-[130mm] print:p-6 print:rounded-3xl print:m-auto print:break-inside-avoid print:page-break-inside-avoid"
+        className="w-full max-w-sm bg-white text-gray-900 rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col items-center text-center border-4 border-gray-900 my-auto print:shadow-none print:border-4 print:border-gray-900 print:w-[126mm] print:max-w-[130mm] print:p-6 print:rounded-3xl print:m-auto print:break-inside-avoid print:page-break-inside-avoid"
       >
         {/* Cabeçalho da Placa */}
         <div className="space-y-1 mb-5">
